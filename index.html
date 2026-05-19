@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicReport — Real-Time Incident Reporting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0B0F19;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1a1f2e;
+            --bg-card: #161b28;
+            --bg-input: #1e2433;
+            --text-primary: #FFFFFF;
+            --text-secondary: #b0b8c8;
+            --text-muted: #6b7280;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --success: #10B981;
+            --info: #3B82F6;
+            --accent: #6366f1;
+            --border: #2a3040;
+            --border-light: #374151;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.6);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+        }
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-light);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+        }
+        .btn-lg {
+            padding: 16px 32px;
+            font-size: 1rem;
+            border-radius: var(--radius);
+        }
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: var(--transition);
+        }
+        .card:hover {
+            border-color: var(--border-light);
+            box-shadow: var(--shadow);
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+        textarea.input-field {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            max-width: 560px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes ping {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .navbar-brand .icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar-sm {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 8px;
+        }
+        .hamburger span {
+            width: 24px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: var(--transition);
+        }
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 60px 0;
+            align-items: center;
+            min-height: calc(100vh - 64px - 40px);
+        }
+        .hero-content h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+        .hero-content h1 .highlight {
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-content p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 28px;
+            max-width: 480px;
+        }
+        .hero-cta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .hero-map {
+            width: 100%;
+            height: 420px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            background: var(--bg-card);
+        }
+        .hero-map .leaflet-container {
+            height: 100%;
+            width: 100%;
+            border-radius: var(--radius-lg);
+        }
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 24px 0 40px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .stat-card .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .incident-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .incident-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .incident-card:hover {
+            border-color: var(--border-light);
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+        .incident-card .card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: var(--bg-tertiary);
+        }
+        .incident-card .card-body {
+            padding: 14px 16px;
+        }
+        .incident-card .card-category {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+        .incident-card .card-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .incident-card .card-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .category-btn {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+        .category-btn:hover,
+        .category-btn.selected {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+        .category-btn .cat-icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .map-page-container {
+            display: flex;
+            height: calc(100vh - 64px);
+        }
+        .map-sidebar {
+            width: 380px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .map-main {
+            flex: 1;
+            position: relative;
+        }
+        .map-main .leaflet-container {
+            width: 100%;
+            height: 100%;
+        }
+        .map-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .map-filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .map-filter-chip.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .report-form-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .form-step {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .form-step.active {
+            display: block;
+        }
+        .step-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+            align-items: center;
+        }
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            border: 2px solid var(--border);
+        }
+        .step-dot.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .step-dot.done {
+            background: var(--success);
+            color: #fff;
+            border-color: var(--success);
+        }
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            border-radius: 2px;
+        }
+        .step-line.done {
+            background: var(--success);
+        }
+        .upload-zone {
+            border: 2px dashed var(--border-light);
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-input);
+        }
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .upload-preview {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .upload-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        .dashboard-layout {
+            display: flex;
+            min-height: calc(100vh - 64px);
+        }
+        .dashboard-sidebar {
+            width: 250px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .dashboard-sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .dashboard-sidebar a:hover,
+        .dashboard-sidebar a.active {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+        .dashboard-sidebar a i {
+            width: 20px;
+            text-align: center;
+        }
+        .dashboard-main {
+            flex: 1;
+            padding: 24px 28px;
+            overflow-y: auto;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .dashboard-stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+        }
+        .dashboard-stat .stat-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        .dashboard-stat .stat-num {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+        .dashboard-stat .stat-desc {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .admin-table th {
+            text-align: left;
+            padding: 10px 14px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border);
+        }
+        .admin-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .admin-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .action-btns {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            z-index: 200;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .mobile-bottom-nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.65rem;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .mobile-bottom-nav a.active {
+            color: var(--accent);
+        }
+        .mobile-bottom-nav a i {
+            font-size: 1.2rem;
+        }
+        .fab-btn {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 200;
+            box-shadow: 0 8px 28px rgba(99, 102, 241, 0.5);
+            transition: var(--transition);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .fab-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 36px rgba(99, 102, 241, 0.7);
+        }
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease;
+            box-shadow: var(--shadow-lg);
+            max-width: 380px;
+        }
+        .toast-success {
+            background: #065f46;
+            color: #d1fae5;
+            border: 1px solid #059669;
+        }
+        .toast-error {
+            background: #7f1d1d;
+            color: #fee2e2;
+            border: 1px solid #dc2626;
+        }
+        .toast-info {
+            background: #1e3a5f;
+            color: #dbeafe;
+            border: 1px solid #3b82f6;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .trust-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.85rem;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-btn.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-muted);
+            gap: 10px;
+        }
+        .loading-spinner i {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @media (max-width: 1024px) {
+            .hero {
+                grid-template-columns: 1fr;
+                gap: 24px;
+                padding: 30px 0;
+            }
+            .hero-map {
+                height: 300px;
+            }
+            .map-sidebar {
+                width: 280px;
+            }
+            .dashboard-sidebar {
+                width: 200px;
+            }
+        }
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                border-bottom: 1px solid var(--border);
+                padding: 16px;
+                gap: 4px;
+                z-index: 99;
+            }
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .map-page-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .map-sidebar {
+                width: 100%;
+                max-height: 300px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            .map-main {
+                height: 400px;
+            }
+            .dashboard-layout {
+                flex-direction: column;
+            }
+            .dashboard-sidebar {
+                display: none;
+            }
+            .mobile-bottom-nav {
+                display: flex;
+            }
+            .fab-btn {
+                display: flex;
+            }
+            .dashboard-main {
+                padding: 16px;
+                padding-bottom: 90px;
+            }
+            .incident-grid {
+                grid-template-columns: 1fr;
+            }
+            .category-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .admin-table {
+                font-size: 0.7rem;
+            }
+            .admin-table th,
+            .admin-table td {
+                padding: 8px 6px;
+            }
+        }
+        @media (max-width: 480px) {
+            .hero-content h1 {
+                font-size: 1.6rem;
+            }
+            .btn-lg {
+                padding: 12px 20px;
+                font-size: 0.85rem;
+            }
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .stats-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <a class="navbar-brand" href="#" onclick="navigateTo('home')">
+            <div class="icon">🛡️</div>CivicReport
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#" onclick="navigateTo('home')" class="active" data-nav="home">Home</a></li>
+            <li><a href="#" onclick="navigateTo('map')" data-nav="map">Live Map</a></li>
+            <li><a href="#" onclick="navigateTo('report')" data-nav="report">Report</a></li>
+            <li><a href="#" onclick="navigateTo('dashboard')" data-nav="dashboard">Dashboard</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button class="btn btn-outline btn-sm" id="authBtn" onclick="toggleAuthModal()">Sign In</button>
+            <div class="avatar-sm" id="userAvatar" style="display:none;" onclick="navigateTo('dashboard')" title="Go to Dashboard">U</div>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+        </div>
+    </nav>
+    <div class="toast-container" id="toastContainer"></div>
+    <main id="appContent"></main>
+    <nav class="mobile-bottom-nav" id="mobileNav">
+        <a href="#" onclick="navigateTo('home')" class="active" data-mob-nav="home"><i class="fas fa-home"></i>Home</a>
+        <a href="#" onclick="navigateTo('map')" data-mob-nav="map"><i class="fas fa-map-marked-alt"></i>Map</a>
+        <a href="#" onclick="navigateTo('report')" data-mob-nav="report"><i class="fas fa-plus-circle"></i>Report</a>
+        <a href="#" onclick="navigateTo('dashboard')" data-mob-nav="dashboard"><i class="fas fa-bell"></i>Alerts</a>
+        <a href="#" onclick="navigateTo('dashboard')" data-mob-nav="profile"><i class="fas fa-user"></i>Profile</a>
+    </nav>
+    <button class="fab-btn" id="fabBtn" title="Quick Report" onclick="navigateTo('report')">+</button>
+
+    <div class="modal-overlay" id="authModal" style="display:none;">
+        <div class="modal" id="authModalContent">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 id="authModalTitle">Sign In</h3>
+                <button class="btn btn-outline btn-sm" onclick="toggleAuthModal()" style="border:none;font-size:1.2rem;">✕</button>
+            </div>
+            <div id="authFormArea">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <input type="email" class="input-field" placeholder="Email address" id="authEmail">
+                    <input type="password" class="input-field" placeholder="Password" id="authPassword">
+                    <input type="text" class="input-field" placeholder="Full name (for sign up)" id="authName" style="display:none;">
+                    <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="authSubmitBtn" onclick="handleAuth()">Sign In</button>
+                    <p style="text-align:center;font-size:0.8rem;color:var(--text-muted);">
+                        <span id="authToggleText">Don't have an account?</span>
+                        <a href="#" style="color:var(--accent);" id="authToggleLink" onclick="toggleAuthMode()">Sign Up</a>
+                    </p>
+                    <hr style="border-color:var(--border);">
+                    <button class="btn btn-outline btn-lg" style="width:100%;justify-content:center;" onclick="handleAnonymousReport()">
+                        <i class="fas fa-ghost"></i> Continue as Guest Reporter
+                    </button>
+                </div>
+            </div>
+            <div id="authLoading" style="display:none;text-align:center;padding:20px;">
+                <div class="loading-spinner"><i class="fas fa-spinner"></i> Please wait...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportDetailModal" style="display:none;">
+        <div class="modal" id="reportDetailContent" style="max-width:640px;"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
+    <script>
+        (function() {
+            // ─────────────────────────────────────────
+            // SUPABASE INITIALIZATION
+            // ─────────────────────────────────────────
+            const SUPABASE_URL = 'https://dkpivxujzpkrgijnztqj.supabase.co';
+            const SUPABASE_KEY =
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcGl2eHVqenBrcmdpam56dHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NDQ2MzYsImV4cCI6MjA5NDQyMDYzNn0.mim4JS-R_2XAK7xho_hcFIlNT8AjLpOojzOuk5RxkyQ';
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            // ─────────────────────────────────────────
+            // GLOBAL STATE
+            // ─────────────────────────────────────────
+            const APP_STATE = {
+                currentUser: null,
+                currentProfile: null,
+                isAuthenticated: false,
+                isAuthModeSignUp: false,
+                currentPage: 'home',
+                reports: [],
+                categories: [],
+                pendingReports: [],
+                reportForm: {
+                    step: 1,
+                    category: null,
+                    lat: null,
+                    lng: null,
+                    locationName: '',
+                    images: [],
+                    videoFile: null,
+                    title: '',
+                    description: '',
+                    severity: 'medium',
+                    anonymous: false,
+                },
+                mapInstance: null,
+                mapMarkers: [],
+                isLoading: false,
+            };
+
+            // ─────────────────────────────────────────
+            // TOAST NOTIFICATIONS
+            // ─────────────────────────────────────────
+            function showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100px)';
+                    toast.style.transition = '0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            }
+
+            // ─────────────────────────────────────────
+            // AUTH FUNCTIONS
+            // ─────────────────────────────────────────
+            function toggleAuthModal() {
+                const modal = document.getElementById('authModal');
+                modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+                resetAuthForm();
+            }
+
+            function resetAuthForm() {
+                document.getElementById('authEmail').value = '';
+                document.getElementById('authPassword').value = '';
+                document.getElementById('authName').value = '';
+                APP_STATE.isAuthModeSignUp = false;
+                document.getElementById('authLoading').style.display = 'none';
+                document.getElementById('authFormArea').style.display = 'block';
+                updateAuthFormUI();
+            }
+
+            function toggleAuthMode() {
+                APP_STATE.isAuthModeSignUp = !APP_STATE.isAuthModeSignUp;
+                updateAuthFormUI();
+            }
+
+            function updateAuthFormUI() {
+                const title = document.getElementById('authModalTitle');
+                const submitBtn = document.getElementById('authSubmitBtn');
+                const toggleText = document.getElementById('authToggleText');
+                const toggleLink = document.getElementById('authToggleLink');
+                const nameField = document.getElementById('authName');
+                if (APP_STATE.isAuthModeSignUp) {
+                    title.textContent = 'Create Account';
+                    submitBtn.textContent = 'Sign Up';
+                    toggleText.textContent = 'Already have an account?';
+                    toggleLink.textContent = 'Sign In';
+                    nameField.style.display = 'block';
+                } else {
+                    title.textContent = 'Sign In';
+                    submitBtn.textContent = 'Sign In';
+                    toggleText.textContent = "Don't have an account?";
+                    toggleLink.textContent = 'Sign Up';
+                    nameField.style.display = 'none';
+                }
+            }
+
+            async function handleAuth() {
+                const email = document.getElementById('authEmail').value.trim();
+                const password = document.getElementById('authPassword').value.trim();
+                const name = document.getElementById('authName').value.trim();
+                if (!email || !password) { showToast('Please fill in all required fields.', 'error'); return; }
+                if (APP_STATE.isAuthModeSignUp && !name) { showToast('Please enter your full name.',
+                'error'); return; }
+
+                document.getElementById('authFormArea').style.display = 'none';
+                document.getElementById('authLoading').style.display = 'block';
+
+                try {
+                    if (APP_STATE.isAuthModeSignUp) {
+                        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                        if (error) throw error;
+                        if (data.user) {
+                            await supabaseClient.from('profiles').upsert({
+                                id: data.user.id,
+                                full_name: name,
+                                role: 'user',
+                                reputation: 0
+                            });
+                            APP_STATE.currentUser = data.user;
+                            APP_STATE.currentProfile = { id: data.user.id, full_name: name, role: 'user',
+                                reputation: 0 };
+                            APP_STATE.isAuthenticated = true;
+                            showToast('Account created! Welcome, ' + name + '.', 'success');
+                        }
+                    } else {
+                        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                        if (error) throw error;
+                        if (data.user) {
+                            APP_STATE.currentUser = data.user;
+                            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id',
+                                data.user.id).single();
+                            APP_STATE.currentProfile = profile || { id: data.user.id, full_name: email.split('@')[
+                                    0], role: 'user', reputation: 0 };
+                            APP_STATE.isAuthenticated = true;
+                            showToast('Welcome back, ' + (APP_STATE.currentProfile.full_name || email.split('@')[
+                                0]) + '!', 'success');
+                        }
+                    }
+                    toggleAuthModal();
+                    updateAuthUI();
+                    if (APP_STATE.currentPage === 'dashboard') navigateTo('dashboard');
+                    if (APP_STATE.currentPage === 'home') navigateTo('home');
+                } catch (err) {
+                    showToast(err.message || 'Authentication failed.', 'error');
+                    document.getElementById('authFormArea').style.display = 'block';
+                    document.getElementById('authLoading').style.display = 'none';
+                }
+            }
+
+            function handleAnonymousReport() {
+                APP_STATE.isAuthenticated = false;
+                APP_STATE.currentUser = null;
+                APP_STATE.currentProfile = null;
+                toggleAuthModal();
+                navigateTo('report');
+                APP_STATE.reportForm.anonymous = true;
+                showToast('You are reporting anonymously. Your report will be reviewed.', 'info');
+            }
+
+            async function updateAuthUI() {
+                const authBtn = document.getElementById('authBtn');
+                const avatar = document.getElementById('userAvatar');
+                if (APP_STATE.isAuthenticated && APP_STATE.currentUser) {
+                    authBtn.style.display = 'none';
+                    avatar.style.display = 'flex';
+                    avatar.textContent = (APP_STATE.currentProfile?.full_name || APP_STATE.currentUser.email ||
+                        'U').charAt(0).toUpperCase();
+                } else {
+                    authBtn.style.display = 'inline-flex';
+                    avatar.style.display = 'none';
+                }
+            }
+
+            async function logout() {
+                await supabaseClient.auth.signOut();
+                APP_STATE.currentUser = null;
+                APP_STATE.currentProfile = null;
+                APP_STATE.isAuthenticated = false;
+                updateAuthUI();
+                navigateTo('home');
+                showToast('You have been logged out.', 'info');
+            }
+
+            async function checkSession() {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (user) {
+                    APP_STATE.currentUser = user;
+                    APP_STATE.isAuthenticated = true;
+                    const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id)
+                        .single();
+                    APP_STATE.currentProfile = profile || { id: user.id, full_name: user.email?.split('@')[0],
+                        role: 'user', reputation: 0 };
+                }
+                updateAuthUI();
+            }
+
+            // ─────────────────────────────────────────
+            // DATA FETCHING
+            // ─────────────────────────────────────────
+            async function fetchCategories() {
+                const { data, error } = await supabaseClient.from('categories').select('*').order('name');
+                if (data && data.length > 0) {
+                    APP_STATE.categories = data.map(c => ({
+                        id: c.id,
+                        name: c.name,
+                        icon: getCategoryIcon(c.name),
+                        color: getCategoryColor(c.name),
+                    }));
+                } else {
+                    APP_STATE.categories = [
+                        { id: 1, name: 'Fire', icon: '🔥', color: '#EF4444' },
+                        { id: 2, name: 'Flood', icon: '🌊', color: '#3B82F6' },
+                        { id: 3, name: 'Accident', icon: '🚗', color: '#F59E0B' },
+                        { id: 4, name: 'Crime', icon: '🔫', color: '#EF4444' },
+                        { id: 5, name: 'Road Issue', icon: '🛣️', color: '#F59E0B' },
+                        { id: 6, name: 'Electricity', icon: '⚡', color: '#6366f1' },
+                    ];
+                }
+            }
+
+            function getCategoryIcon(name) {
+                const map = { 'Fire': '🔥', 'Flood': '🌊', 'Accident': '🚗', 'Crime': '🔫', 'Road Issue': '🛣️',
+                    'Electricity': '⚡', 'Medical': '🏥', 'Corruption': '💰' };
+                return map[name] || '📌';
+            }
+
+            function getCategoryColor(name) {
+                const map = { 'Fire': '#EF4444', 'Flood': '#3B82F6', 'Accident': '#F59E0B', 'Crime': '#EF4444',
+                    'Road Issue': '#F59E0B', 'Electricity': '#6366f1', 'Medical': '#EC4899', 'Corruption': '#8B5CF6' };
+                return map[name] || '#6366f1';
+            }
+
+            async function fetchReports() {
+                const { data, error } = await supabaseClient.from('reports').select(
+                    '*, profiles:user_id(full_name, avatar_url)').order('created_at', { ascending: false });
+                if (data) {
+                    APP_STATE.reports = data.map(r => ({
+                        ...r,
+                        userName: r.anonymous ? (r.anonymous_name || 'Anonymous') : (r.profiles?.full_name ||
+                            'User'),
+                    }));
+                    APP_STATE.pendingReports = APP_STATE.reports.filter(r => r.status === 'pending');
+                }
+                return APP_STATE.reports;
+            }
+
+            async function fetchReportById(id) {
+                const { data, error } = await supabaseClient.from('reports').select(
+                    '*, profiles:user_id(full_name, avatar_url)').eq('id', id).single();
+                if (data) {
+                    data.userName = data.anonymous ? (data.anonymous_name || 'Anonymous') : (data.profiles
+                        ?.full_name || 'User');
+                }
+                return data;
+            }
+
+            async function fetchComments(reportId) {
+                const { data } = await supabaseClient.from('comments').select(
+                    '*, profiles:user_id(full_name)').eq('report_id', reportId).order('created_at', {
+                    ascending: true });
+                return data || [];
+            }
+
+            // ─────────────────────────────────────────
+            // FILE UPLOAD
+            // ─────────────────────────────────────────
+            async function uploadImage(file) {
+                const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const { data, error } = await supabaseClient.storage.from('report-images').upload(fileName, file);
+                if (error) { showToast('Image upload failed: ' + error.message, 'error'); return null; }
+                const { data: { publicUrl } } = supabaseClient.storage.from('report-images').getPublicUrl(fileName);
+                return publicUrl;
+            }
+
+            async function uploadVideo(file) {
+                const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const { data, error } = await supabaseClient.storage.from('report-videos').upload(fileName, file);
+                if (error) { showToast('Video upload failed: ' + error.message, 'error'); return null; }
+                const { data: { publicUrl } } = supabaseClient.storage.from('report-videos').getPublicUrl(fileName);
+                return publicUrl;
+            }
+
+            // ─────────────────────────────────────────
+            // REPORT SUBMISSION
+            // ─────────────────────────────────────────
+            async function submitReportToSupabase() {
+                const form = APP_STATE.reportForm;
+                if (!form.category) { showToast('Please select a category.', 'error');
+                    goToStep(1); return; }
+                if (!form.lat || !form.lng) { showToast('Please set the location.', 'error');
+                    goToStep(2); return; }
+                if (!form.title) { showToast('Please enter a title.', 'error'); return; }
+                if (!form.description) { showToast('Please enter a description.', 'error'); return; }
+
+                APP_STATE.isLoading = true;
+                let imageUrl = null;
+                let videoUrl = null;
+                try {
+                    if (form.images.length > 0) {
+                        const file = form.images[0];
+                        if (file instanceof File) imageUrl = await uploadImage(file);
+                        else imageUrl = form.images[0];
+                    }
+                    if (form.videoFile) videoUrl = await uploadVideo(form.videoFile);
+                    const reportData = {
+                        title: form.title,
+                        description: form.description,
+                        category: form.category.name,
+                        latitude: form.lat,
+                        longitude: form.lng,
+                        location_name: form.locationName || 'Unknown',
+                        severity: form.severity,
+                        anonymous: form.anonymous || !APP_STATE.isAuthenticated,
+                        anonymous_name: form.anonymous ? 'Anonymous' : null,
+                        image_url: imageUrl,
+                        video_url: videoUrl,
+                        user_id: APP_STATE.isAuthenticated ? APP_STATE.currentUser.id : null,
+                        status: (form.anonymous || !APP_STATE.isAuthenticated) ? 'pending' : 'pending',
+                        verified: false,
+                        verification_count: 0,
+                    };
+                    const { data, error } = await supabaseClient.from('reports').insert([reportData]).select();
+                    if (error) throw error;
+                    if (data && data[0] && imageUrl) {
+                        await supabaseClient.from('report_images').insert([{ report_id: data[0].id,
+                            image_url: imageUrl }]);
+                    }
+                    showToast('Report submitted successfully!', 'success');
+                    document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+                    const successEl = document.getElementById('formSuccess');
+                    if (successEl) successEl.classList.add('active');
+                    APP_STATE.reportForm = { step: 1, category: null, lat: null, lng: null, locationName: '',
+                        images: [], videoFile: null, title: '', description: '', severity: 'medium',
+                        anonymous: false };
+                    await fetchReports();
+                    updateAuthUI();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (err) {
+                    showToast('Failed to submit report: ' + err.message, 'error');
+                } finally {
+                    APP_STATE.isLoading = false;
+                }
+            }
+
+            // ─────────────────────────────────────────
+            // VERIFICATION
+            // ─────────────────────────────────────────
+            async function verifyReportFromDetail(reportId) {
+                if (!APP_STATE.isAuthenticated) { showToast('Please sign in to verify reports.', 'error'); return; }
+                try {
+                    const { error: verr } = await supabaseClient.from('report_verifications').insert([
+                        { report_id: reportId, user_id: APP_STATE.currentUser.id }
+                    ]);
+                    if (verr && verr.code === '23505') { showToast('You already verified this report.',
+                    'info'); return; }
+                    if (verr) throw verr;
+                    const { data: countData } = await supabaseClient.from('report_verifications').select('*',
+                        { count: 'exact', head: true }).eq('report_id', reportId);
+                    const vCount = countData?.count || 0;
+                    const updates = { verification_count: vCount };
+                    if (vCount >= 3) { updates.verified = true;
+                        updates.status = 'verified'; }
+                    await supabaseClient.from('reports').update(updates).eq('id', reportId);
+                    if (APP_STATE.currentProfile) {
+                        await supabaseClient.from('profiles').update({ reputation: (APP_STATE.currentProfile
+                                .reputation || 0) + 2 }).eq('id', APP_STATE.currentUser.id);
+                        APP_STATE.currentProfile.reputation = (APP_STATE.currentProfile.reputation || 0) + 2;
+                    }
+                    showToast('Report verified! Thank you.', 'success');
+                    document.getElementById('reportDetailModal').style.display = 'none';
+                    await fetchReports();
+                    navigateTo(APP_STATE.currentPage);
+                } catch (err) {
+                    showToast('Verification failed: ' + err.message, 'error');
+                }
+            }
+
+            async function addCommentFromDetail(reportId) {
+                const input = document.getElementById('commentInput');
+                const content = input?.value.trim();
+                if (!content) return;
+                if (!APP_STATE.isAuthenticated) { showToast('Please sign in to comment.', 'error'); return; }
+                try {
+                    await supabaseClient.from('comments').insert([{ report_id: reportId, user_id: APP_STATE
+                            .currentUser.id, content }]);
+                    input.value = '';
+                    const report = await fetchReportById(reportId);
+                    if (report) openReportDetail(report);
+                    showToast('Comment posted!', 'success');
+                } catch (err) {
+                    showToast('Failed to post comment: ' + err.message, 'error');
+                }
+            }
+
+            // ─────────────────────────────────────────
+            // NAVIGATION
+            // ─────────────────────────────────────────
+            function navigateTo(page) {
+                APP_STATE.currentPage = page;
+                document.querySelectorAll('[data-nav]').forEach(el => el.classList.remove('active'));
+                document.querySelector(`[data-nav="${page}"]`)?.classList.add('active');
+                document.querySelectorAll('[data-mob-nav]').forEach(el => el.classList.remove('active'));
+                document.querySelector(`[data-mob-nav="${page}"]`)?.classList.add('active');
+                const appContent = document.getElementById('appContent');
+                switch (page) {
+                    case 'home':
+                        renderHomePage(appContent);
+                        break;
+                    case 'map':
+                        renderMapPage(appContent);
+                        break;
+                    case 'report':
+                        renderReportPage(appContent);
+                        break;
+                    case 'dashboard':
+                        renderDashboardPage(appContent);
+                        break;
+                    default:
+                        renderHomePage(appContent);
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                updateMobileNavVisibility();
+            }
+
+            function updateMobileNavVisibility() {
+                const mobileNav = document.getElementById('mobileNav');
+                const fabBtn = document.getElementById('fabBtn');
+                if (window.innerWidth <= 768) {
+                    mobileNav.style.display = 'flex';
+                    fabBtn.style.display = 'flex';
+                } else {
+                    mobileNav.style.display = 'none';
+                    fabBtn.style.display = 'none';
+                }
+            }
+
+            function getTimeAgo(timestamp) {
+                const diff = Date.now() - new Date(timestamp).getTime();
+                const mins = Math.floor(diff / 60000);
+                if (mins < 1) return 'Just now';
+                if (mins < 60) return `${mins}m ago`;
+                const hours = Math.floor(mins / 60);
+                if (hours < 24) return `${hours}h ago`;
+                return `${Math.floor(hours / 24)}d ago`;
+            }
+
+            // ─────────────────────────────────────────
+            // RENDER: HOME PAGE
+            // ─────────────────────────────────────────
+            function renderHomePage(container) {
+                const verifiedCount = APP_STATE.reports.filter(r => r.verified).length;
+                const totalReports = APP_STATE.reports.length;
+                const activeAreas = new Set(APP_STATE.reports.map(r => r.location_name?.split(',')[1]?.trim()))
+                    .size;
+                container.innerHTML = `
+                <div class="container">
+                  <section class="hero">
+                    <div class="hero-content">
+                      <h1>Report incidents around you in <span class="highlight">real time.</span></h1>
+                      <p>Join citizens making their communities safer. Report incidents, verify reports, and stay informed with live maps and alerts.</p>
+                      <div class="hero-cta">
+                        <button class="btn btn-primary btn-lg" onclick="navigateTo('report')"><i class="fas fa-bullhorn"></i> Report Incident</button>
+                        <button class="btn btn-outline btn-lg" onclick="navigateTo('map')"><i class="fas fa-map-marked-alt"></i> Explore Map</button>
+                      </div>
+                    </div>
+                    <div class="hero-map" id="heroMap"></div>
+                  </section>
+                  <div class="stats-bar">
+                    <div class="stat-card"><div class="stat-value" style="color:var(--accent);">${totalReports.toLocaleString()}</div><div class="stat-label">Total Reports</div></div>
+                    <div class="stat-card"><div class="stat-value" style="color:var(--success);">${verifiedCount.toLocaleString()}</div><div class="stat-label">Verified Incidents</div></div>
+                    <div class="stat-card"><div class="stat-value" style="color:var(--warning);">${activeAreas}</div><div class="stat-label">Active Areas</div></div>
+                    <div class="stat-card"><div class="stat-value" style="color:var(--info);">98%</div><div class="stat-label">Response Rate</div></div>
+                  </div>
+                  <div class="section-header"><h2>📡 Live Incident Feed</h2><button class="btn btn-outline btn-sm" onclick="navigateTo('map')">View All</button></div>
+                  <div class="incident-grid" id="homeFeedGrid"></div>
+                  <div class="section-header" style="margin-top:40px;"><h2>📂 Report Categories</h2></div>
+                  <div class="category-grid" id="homeCategoryGrid"></div>
+                </div>
+              `;
+                const feedGrid = document.getElementById('homeFeedGrid');
+                if (APP_STATE.reports.length === 0) {
+                    feedGrid.innerHTML =
+                        '<div class="loading-spinner"><i class="fas fa-spinner"></i> Loading reports...</div>';
+                } else {
+                    APP_STATE.reports.slice(0, 6).forEach(r => { feedGrid.appendChild(createIncidentCard(r)); });
+                }
+                const catGrid = document.getElementById('homeCategoryGrid');
+                APP_STATE.categories.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.innerHTML = `<span class="cat-icon">${cat.icon}</span>${cat.name}`;
+                    btn.onclick = () => { APP_STATE.reportForm.category = cat;
+                        navigateTo('report'); };
+                    catGrid.appendChild(btn);
+                });
+                setTimeout(() => initHeroMap(), 300);
+            }
+
+            function createIncidentCard(report) {
+                const card = document.createElement('div');
+                card.className = 'incident-card';
+                card.onclick = () => openReportDetail(report);
+                const timeAgo = getTimeAgo(report.created_at);
+                const severityBadge = report.severity === 'high' || report.severity === 'critical' ?
+                    'badge-danger' : report.severity === 'medium' ? 'badge-warning' : 'badge-info';
+                const catData = APP_STATE.categories.find(c => c.name === report.category);
+                card.innerHTML = `
+                <img class="card-img" src="${report.image_url || 'https://picsum.photos/seed/default/600/400'}" alt="${report.title}" onerror="this.src='https://picsum.photos/seed/fallback/600/400'">
+                <div class="card-body">
+                  <div class="card-category" style="color:${catData?.color || '#fff'};">${catData?.icon || '📌'} ${report.category}</div>
+                  <div class="card-title">${report.title}</div>
+                  <div class="card-meta">
+                    <span><i class="fas fa-map-marker-alt"></i> ${report.location_name?.split(',')[0] || 'Unknown'}</span>
+                    <span>${timeAgo}</span>
+                    ${report.verified ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified</span>' : '<span class="badge badge-warning">Pending</span>'}
+                    <span class="badge ${severityBadge}">${report.severity?.toUpperCase()}</span>
+                  </div>
+                </div>
+              `;
+                return card;
+            }
+
+            function initHeroMap() {
+                const mapEl = document.getElementById('heroMap');
+                if (!mapEl) return;
+                if (APP_STATE.mapInstance) { APP_STATE.mapInstance.remove();
+                    APP_STATE.mapInstance = null; }
+                const map = L.map('heroMap', { zoomControl: false, attributionControl: false }).setView([6.52, 3.38],
+                    12);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(
+                map);
+                APP_STATE.reports.forEach(r => {
+                    if (r.latitude && r.longitude) {
+                        const catData = APP_STATE.categories.find(c => c.name === r.category);
+                        L.circleMarker([r.latitude, r.longitude], { radius: 8, fillColor: catData?.color ||
+                                '#EF4444', color: '#fff', weight: 2, fillOpacity: 0.85 }).addTo(map).bindPopup(
+                                `<b>${catData?.icon || ''} ${r.title}</b><br><small>${r.location_name}</small>`);
+                    }
+                });
+                APP_STATE.mapInstance = map;
+                setTimeout(() => map.invalidateSize(), 150);
+            }
+
+            // ─────────────────────────────────────────
+            // RENDER: MAP PAGE
+            // ─────────────────────────────────────────
+            function renderMapPage(container) {
+                container.innerHTML = `
+                <div class="map-page-container">
+                  <div class="map-sidebar" id="mapSidebar">
+                    <input type="text" class="input-field" placeholder="🔍 Search area or incident..." id="mapSearch" oninput="filterMapSidebar()">
+                    <div class="map-filters" id="mapFilters"></div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;"><label><input type="checkbox" id="filterVerifiedOnly" onchange="applyMapFilters()"> Verified only</label></div>
+                    <div id="mapSidebarList" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;overflow-y:auto;flex:1;"></div>
+                  </div>
+                  <div class="map-main" id="fullMapContainer"></div>
+                </div>
+              `;
+                const filterContainer = document.getElementById('mapFilters');
+                const allChip = document.createElement('span');
+                allChip.className = 'map-filter-chip active';
+                allChip.textContent = 'All';
+                allChip.onclick = () => applyMapFilters('all');
+                filterContainer.appendChild(allChip);
+                APP_STATE.categories.forEach(cat => {
+                    const chip = document.createElement('span');
+                    chip.className = 'map-filter-chip';
+                    chip.textContent = cat.icon + ' ' + cat.name;
+                    chip.dataset.category = cat.name;
+                    chip.onclick = () => applyMapFilters(cat.name);
+                    filterContainer.appendChild(chip);
+                });
+                updateMapSidebarList();
+                setTimeout(() => initFullMap(), 300);
+            }
+
+            function updateMapSidebarList(filterCategory = 'all', searchTerm = '') {
+                const listEl = document.getElementById('mapSidebarList');
+                if (!listEl) return;
+                let filtered = APP_STATE.reports;
+                const verifiedOnly = document.getElementById('filterVerifiedOnly')?.checked;
+                if (verifiedOnly) filtered = filtered.filter(r => r.verified);
+                if (filterCategory !== 'all') filtered = filtered.filter(r => r.category === filterCategory);
+                if (searchTerm) {
+                    const term = searchTerm.toLowerCase();
+                    filtered = filtered.filter(r => r.title.toLowerCase().includes(term) || (r.location_name || '')
+                        .toLowerCase().includes(term));
+                }
+                if (filtered.length === 0) {
+                    listEl.innerHTML =
+                        '<p style="color:var(--text-muted);text-align:center;padding:20px;">No reports found.</p>';
+                } else {
+                    listEl.innerHTML = filtered.map(r => {
+                        const catData = APP_STATE.categories.find(c => c.name === r.category);
+                        return `
+                    <div class="card" style="padding:12px;cursor:pointer;" onclick="openReportDetailById(${r.id})">
+                      <div style="display:flex;gap:10px;align-items:center;">
+                        <span style="font-size:1.5rem;">${catData?.icon || '📌'}</span>
+                        <div style="flex:1;"><div style="font-weight:600;font-size:0.85rem;">${r.title}</div><div style="font-size:0.75rem;color:var(--text-muted);">${r.location_name} · ${getTimeAgo(r.created_at)}</div></div>
+                        ${r.verified?'<span class="badge badge-success">✓</span>':'<span class="badge badge-warning">⏳</span>'}
+                      </div></div>`;
+                    }).join('');
+                }
+            }
+
+            function filterMapSidebar() {
+                const searchTerm = document.getElementById('mapSearch')?.value || '';
+                const activeChip = document.querySelector('#mapFilters .map-filter-chip.active');
+                const category = activeChip?.dataset?.category || 'all';
+                updateMapSidebarList(category, searchTerm);
+            }
+
+            function applyMapFilters(category = 'all') {
+                document.querySelectorAll('#mapFilters .map-filter-chip').forEach(chip => {
+                    chip.classList.remove('active');
+                    if (chip.dataset.category === category || (category === 'all' && chip.textContent ===
+                            'All')) chip.classList.add('active');
+                });
+                const searchTerm = document.getElementById('mapSearch')?.value || '';
+                updateMapSidebarList(category, searchTerm);
+                updateFullMapMarkers(category);
+            }
+
+            function initFullMap() {
+                const mapEl = document.getElementById('fullMapContainer');
+                if (!mapEl) return;
+                if (APP_STATE.mapInstance) { APP_STATE.mapInstance.remove();
+                    APP_STATE.mapInstance = null; }
+                const map = L.map('fullMapContainer', { zoomControl: true }).setView([6.52, 3.38], 13);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(
+                map);
+                APP_STATE.mapInstance = map;
+                APP_STATE.mapMarkers = [];
+                APP_STATE.reports.forEach(r => { if (r.latitude && r.longitude) addMapMarker(map, r); });
+                setTimeout(() => map.invalidateSize(), 200);
+            }
+
+            function addMapMarker(map, report) {
+                const catData = APP_STATE.categories.find(c => c.name === report.category);
+                const marker = L.circleMarker([report.latitude, report.longitude], {
+                    radius: (report.severity === 'high' || report.severity === 'critical') ? 10 : 7,
+                    fillColor: catData?.color || '#EF4444',
+                    color: '#fff',
+                    weight: 2,
+                    fillOpacity: 0.85,
+                }).addTo(map);
+                marker.bindPopup(`
+                <div style="font-family:Inter,sans-serif;max-width:220px;">
+                  ${report.image_url?`<img src="${report.image_url}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px;" onerror="this.style.display='none'">`:''}
+                  <b>${catData?.icon||''} ${report.title}</b>
+                  <p style="margin:4px 0;font-size:0.75rem;">${report.location_name}</p>
+                  <span class="badge ${(report.severity==='high'||report.severity==='critical')?'badge-danger':report.severity==='medium'?'badge-warning':'badge-info'}">${report.severity}</span>
+                  ${report.verified?'<span class="badge badge-success">Verified</span>':''}
+                  <br><button class="btn btn-primary btn-sm" style="margin-top:6px;font-family:Inter,sans-serif;" onclick="openReportDetailById(${report.id})">View Details</button>
+                </div>`);
+                marker.reportData = report;
+                APP_STATE.mapMarkers.push(marker);
+            }
+
+            function updateFullMapMarkers(category) {
+                if (!APP_STATE.mapInstance) return;
+                APP_STATE.mapMarkers.forEach(m => APP_STATE.mapInstance.removeLayer(m));
+                APP_STATE.mapMarkers = [];
+                const verifiedOnly = document.getElementById('filterVerifiedOnly')?.checked;
+                let filtered = APP_STATE.reports;
+                if (verifiedOnly) filtered = filtered.filter(r => r.verified);
+                if (category !== 'all') filtered = filtered.filter(r => r.category === category);
+                filtered.forEach(r => { if (r.latitude && r.longitude) addMapMarker(APP_STATE.mapInstance, r); });
+            }
+
+            // ─────────────────────────────────────────
+            // RENDER: REPORT PAGE
+            // ─────────────────────────────────────────
+            function renderReportPage(container) {
+                const form = APP_STATE.reportForm;
+                container.innerHTML = `
+                <div class="report-form-container">
+                  <h2 style="margin-bottom:4px;">📝 Report an Incident</h2>
+                  <p style="color:var(--text-muted);margin-bottom:24px;">Your report helps keep the community safe and informed.</p>
+                  <div class="step-indicator">
+                    <div class="step-dot active" id="stepDot1">1</div><div class="step-line" id="stepLine1"></div>
+                    <div class="step-dot" id="stepDot2">2</div><div class="step-line" id="stepLine2"></div>
+                    <div class="step-dot" id="stepDot3">3</div><div class="step-line" id="stepLine3"></div>
+                    <div class="step-dot" id="stepDot4">4</div>
+                  </div>
+                  <div class="form-step active" id="formStep1">
+                    <h3>Select Category</h3><p style="color:var(--text-muted);margin-bottom:16px;">What type of incident?</p>
+                    <div class="category-grid" id="reportCategoryGrid"></div>
+                    <div style="margin-top:20px;display:flex;justify-content:flex-end;"><button class="btn btn-primary" id="step1Next" disabled onclick="goToStep(2)">Next →</button></div>
+                  </div>
+                  <div class="form-step" id="formStep2">
+                    <h3>📍 Pinpoint Location</h3><p style="color:var(--text-muted);margin-bottom:16px;">Drag the pin to the exact incident location.</p>
+                    <div id="reportLocationMap" style="height:300px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px;"></div>
+                    <input type="text" class="input-field" placeholder="Location name" id="locationNameInput" value="${form.locationName}">
+                    <p style="font-size:0.75rem;color:var(--text-muted);">Coordinates: <span id="coordDisplay">${form.lat?form.lat.toFixed(4)+', '+form.lng.toFixed(4):'Detecting...'}</span></p>
+                    <div style="margin-top:16px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(1)">← Back</button><button class="btn btn-primary" onclick="goToStep(3)">Next →</button></div>
+                  </div>
+                  <div class="form-step" id="formStep3">
+                    <h3>📸 Upload Evidence</h3><p style="color:var(--text-muted);margin-bottom:16px;">Add photos or videos.</p>
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload images</p><p style="font-size:0.75rem;color:var(--text-muted);">JPG, PNG (max 10MB)</p></div>
+                    <input type="file" id="fileInput" accept="image/*" multiple style="display:none;" onchange="handleFileUpload(event)">
+                    <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('videoInput').click()"><i class="fas fa-video"></i><p>Click to upload video</p><p style="font-size:0.75rem;color:var(--text-muted);">MP4 (max 20MB)</p></div>
+                    <input type="file" id="videoInputEl" accept="video/*" style="display:none;" onchange="handleVideoUpload(event)">
+                    <div class="upload-preview" id="uploadPreview"></div>
+                    <div style="margin-top:16px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(2)">← Back</button><button class="btn btn-primary" onclick="goToStep(4)">Next →</button></div>
+                  </div>
+                  <div class="form-step" id="formStep4">
+                    <h3>📋 Incident Details</h3>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                      <input type="text" class="input-field" placeholder="Title" id="reportTitle" value="${form.title}">
+                      <textarea class="input-field" placeholder="Describe what happened..." id="reportDescription">${form.description}</textarea>
+                      <select class="input-field" id="reportSeverity"><option value="low" ${form.severity==='low'?'selected':''}>Low Severity</option><option value="medium" ${form.severity==='medium'?'selected':''}>Medium Severity</option><option value="high" ${form.severity==='high'?'selected':''}>High Severity</option><option value="critical" ${form.severity==='critical'?'selected':''}>Critical Severity</option></select>
+                      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" id="anonymousToggle" ${form.anonymous?'checked':''} onchange="APP_STATE.reportForm.anonymous=this.checked"><i class="fas fa-ghost"></i> Report anonymously</label>
+                    </div>
+                    <div style="margin-top:20px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(3)">← Back</button><button class="btn btn-success btn-lg" id="submitReportBtn" onclick="submitReportToSupabase()"><i class="fas fa-paper-plane"></i> Submit Report</button></div>
+                  </div>
+                  <div class="form-step" id="formSuccess" style="text-align:center;padding:40px;">
+                    <div style="font-size:4rem;">✅</div><h2 style="margin-top:16px;">Report Submitted!</h2><p style="color:var(--text-muted);margin:12px 0;">Thank you for helping keep your community safe.</p>
+                    <button class="btn btn-primary btn-lg" onclick="navigateTo('map')">View on Map</button>
+                    <button class="btn btn-outline btn-lg" style="margin-left:8px;" onclick="navigateTo('home')">Back to Home</button>
+                  </div>
+                </div>`;
+                const catGrid = document.getElementById('reportCategoryGrid');
+                APP_STATE.categories.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.innerHTML = `<span class="cat-icon">${cat.icon}</span>${cat.name}`;
+                    btn.onclick = () => {
+                        document.querySelectorAll('#reportCategoryGrid .category-btn').forEach(b => b.classList
+                            .remove('selected'));
+                        btn.classList.add('selected');
+                        APP_STATE.reportForm.category = cat;
+                        document.getElementById('step1Next').disabled = false;
+                    };
+                    if (form.category?.id === cat.id) { btn.classList.add('selected');
+                        document.getElementById('step1Next').disabled = false; }
+                    catGrid.appendChild(btn);
+                });
+                if (form.step > 1) goToStep(form.step, true);
+                setTimeout(() => { if (form.step === 2) initReportLocationMap(); }, 300);
+            }
+
+            function goToStep(step, silent = false) {
+                APP_STATE.reportForm.step = step;
+                document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+                const stepEl = document.getElementById('formStep' + step);
+                if (stepEl) stepEl.classList.add('active');
+                for (let i = 1; i <= 4; i++) {
+                    const dot = document.getElementById('stepDot' + i);
+                    const line = document.getElementById('stepLine' + i);
+                    if (dot) { dot.classList.remove('active', 'done'); if (i < step) dot.classList.add('done'); if (i ===
+                            step) dot.classList.add('active'); }
+                    if (line) { line.classList.remove('done'); if (i < step) line.classList.add('done'); }
+                }
+                if (step === 2 && !silent) initReportLocationMap();
+                window.scrollTo({ top: 200, behavior: 'smooth' });
+            }
+
+            function initReportLocationMap() {
+                const mapEl = document.getElementById('reportLocationMap');
+                if (!mapEl) return;
+                if (mapEl._leaflet_map) mapEl._leaflet_map.remove();
+                const defaultLat = APP_STATE.reportForm.lat || 6.5244;
+                const defaultLng = APP_STATE.reportForm.lng || 3.3792;
+                const map = L.map('reportLocationMap', { zoomControl: true }).setView([defaultLat, defaultLng], 14);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+                const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+                marker.bindPopup('Drag me to the incident location').openPopup();
+                marker.on('dragend', function() {
+                    const pos = marker.getLatLng();
+                    APP_STATE.reportForm.lat = pos.lat;
+                    APP_STATE.reportForm.lng = pos.lng;
+                    document.getElementById('coordDisplay').textContent = pos.lat.toFixed(4) + ', ' + pos.lng.toFixed(
+                        4);
+                    reverseGeocode(pos.lat, pos.lng);
+                });
+                mapEl._leaflet_map = map;
+                setTimeout(() => map.invalidateSize(), 150);
+                if (navigator.geolocation && !APP_STATE.reportForm.lat) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                        marker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+                        APP_STATE.reportForm.lat = pos.coords.latitude;
+                        APP_STATE.reportForm.lng = pos.coords.longitude;
+                        document.getElementById('coordDisplay').textContent = pos.coords.latitude.toFixed(
+                            4) + ', ' + pos.coords.longitude.toFixed(4);
+                        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+                    }, () => { reverseGeocode(defaultLat, defaultLng); });
+                } else { reverseGeocode(defaultLat, defaultLng); }
+            }
+
+            async function reverseGeocode(lat, lng) {
+                try {
+                    const resp = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`);
+                    const data = await resp.json();
+                    const name = data.display_name?.split(',')[0] || 'Unknown location';
+                    APP_STATE.reportForm.locationName = name;
+                    const input = document.getElementById('locationNameInput');
+                    if (input) input.value = name;
+                } catch (e) {}
+            }
+
+            function handleFileUpload(event) {
+                const files = event.target.files;
+                const preview = document.getElementById('uploadPreview');
+                APP_STATE.reportForm.images = [];
+                preview.innerHTML = '';
+                for (const file of files) {
+                    APP_STATE.reportForm.images.push(file);
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            function handleVideoUpload(event) {
+                const file = event.target.files[0];
+                if (file) APP_STATE.reportForm.videoFile = file;
+            }
+
+            // ─────────────────────────────────────────
+            // RENDER: DASHBOARD PAGE
+            // ─────────────────────────────────────────
+            function renderDashboardPage(container) {
+                if (!APP_STATE.isAuthenticated) {
+                    container.innerHTML = `
+                  <div class="container" style="text-align:center;padding:60px 20px;">
+                    <div style="font-size:4rem;">🔒</div><h2>Please Sign In</h2><p style="color:var(--text-muted);margin:12px 0;">Create an account or sign in to access your dashboard.</p>
+                    <button class="btn btn-primary btn-lg" onclick="toggleAuthModal()">Sign In / Sign Up</button>
+                  </div>`;
+                    return;
+                }
+                const userReports = APP_STATE.reports.filter(r => r.user_id === APP_STATE.currentUser?.id);
+                const verifiedCount = userReports.filter(r => r.verified).length;
+                const profile = APP_STATE.currentProfile || {};
+                container.innerHTML = `
+                <div class="dashboard-layout">
+                  <div class="dashboard-sidebar" id="dashSidebar">
+                    <a href="#" class="active" data-dash-tab="overview" onclick="switchDashTab('overview')"><i class="fas fa-th-large"></i> Overview</a>
+                    <a href="#" data-dash-tab="myreports" onclick="switchDashTab('myreports')"><i class="fas fa-file-alt"></i> My Reports</a>
+                    <a href="#" data-dash-tab="profile" onclick="switchDashTab('profile')"><i class="fas fa-user"></i> Profile</a>
+                    <hr style="border-color:var(--border);margin:8px 0;">
+                    <a href="#" onclick="logout()" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                  </div>
+                  <div class="dashboard-main" id="dashMainContent"></div>
+                </div>`;
+                switchDashTab('overview');
+            }
+
+            function switchDashTab(tab) {
+                document.querySelectorAll('[data-dash-tab]').forEach(a => a.classList.remove('active'));
+                document.querySelector(`[data-dash-tab="${tab}"]`)?.classList.add('active');
+                const main = document.getElementById('dashMainContent');
+                if (!main) return;
+                const userReports = APP_STATE.reports.filter(r => r.user_id === APP_STATE.currentUser?.id);
+                const verifiedCount = userReports.filter(r => r.verified).length;
+                const profile = APP_STATE.currentProfile || {};
+                switch (tab) {
+                    case 'overview':
+                        main.innerHTML = `
+                    <h2>Dashboard Overview</h2>
+                    <div class="dashboard-grid">
+                      <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(99,102,241,0.2);color:var(--accent);"><i class="fas fa-file-alt"></i></div><div class="stat-num">${userReports.length}</div><div class="stat-desc">Reports Submitted</div></div>
+                      <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(16,185,129,0.2);color:var(--success);"><i class="fas fa-check-circle"></i></div><div class="stat-num">${verifiedCount}</div><div class="stat-desc">Verified Reports</div></div>
+                      <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(245,158,11,0.2);color:var(--warning);"><i class="fas fa-star"></i></div><div class="stat-num">${profile.reputation||0}</div><div class="stat-desc">Reputation Score</div></div>
+                      <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(239,68,68,0.2);color:var(--danger);"><i class="fas fa-map-marker-alt"></i></div><div class="stat-num">${new Set(userReports.map(r=>r.location_name)).size}</div><div class="stat-desc">Areas Covered</div></div>
+                    </div>
+                    <h3 style="margin-bottom:12px;">Recent Activity</h3>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                      ${userReports.slice(0,5).map(r=>`
+                        <div class="card" style="padding:14px;cursor:pointer;" onclick="openReportDetailById(${r.id})">
+                          <div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>${r.title}</strong><div style="font-size:0.75rem;color:var(--text-muted);">${getTimeAgo(r.created_at)} · ${r.location_name}</div></div><span class="badge ${r.status==='verified'?'badge-success':r.status==='rejected'?'badge-danger':'badge-warning'}">${r.status}</span></div>
+                        </div>`).join('')}
+                      ${userReports.length===0?'<p style="color:var(--text-muted);text-align:center;">No reports yet. <a href="#" onclick="navigateTo(\'report\')" style="color:var(--accent);">Submit your first report</a>.</p>':''}
+                    </div>`;
+                        break;
+                    case 'myreports':
+                        main.innerHTML = `
+                    <h2>My Reports</h2><div style="display:flex;flex-direction:column;gap:10px;">
+                      ${userReports.map(r=>`
+                        <div class="card" style="padding:16px;cursor:pointer;" onclick="openReportDetailById(${r.id})">
+                          <div style="display:flex;gap:12px;">
+                            ${r.image_url?`<img src="${r.image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;" onerror="this.style.display='none'">`:''}
+                            <div style="flex:1;"><strong>${r.title}</strong><p style="font-size:0.8rem;color:var(--text-muted);">${r.location_name} · ${getTimeAgo(r.created_at)}</p>
+                              <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;"><span class="badge ${r.status==='verified'?'badge-success':r.status==='rejected'?'badge-danger':'badge-warning'}">${r.status}</span><span class="badge badge-info">👁 ${r.verification_count} verifications</span></div>
+                            </div></div></div>`).join('')}
+                      ${userReports.length===0?'<p style="color:var(--text-muted);text-align:center;">No reports yet.</p>':''}
+                    </div>`;
+                        break;
+                    case 'profile':
+                        main.innerHTML = `
+                    <h2>👤 Profile</h2>
+                    <div class="card" style="max-width:500px;padding:24px;text-align:center;">
+                      <div class="avatar-sm" style="width:80px;height:80px;font-size:2rem;margin:0 auto;">${(profile.full_name||'U').charAt(0).toUpperCase()}</div>
+                      <h3 style="margin-top:12px;">${profile.full_name||'User'}</h3>
+                      <p style="color:var(--text-muted);">${APP_STATE.currentUser?.email||''}</p>
+                      <div class="trust-badge" style="margin:8px auto;display:inline-flex;"><i class="fas fa-shield-alt"></i> Reputation: ${profile.reputation||0} pts</div>
+                      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">Role: <strong>${profile.role||'user'}</strong></p>
+                      <p style="font-size:0.8rem;color:var(--text-muted);">Total Reports: <strong>${userReports.length}</strong></p>
+                      <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="logout()">Logout</button>
+                    </div>`;
+                        break;
+                }
+            }
+
+            // ─────────────────────────────────────────
+            // REPORT DETAIL MODAL
+            // ─────────────────────────────────────────
+            async function openReportDetailById(reportId) {
+                const report = await fetchReportById(reportId);
+                if (report) openReportDetail(report);
+            }
+
+            async function openReportDetail(report) {
+                const modal = document.getElementById('reportDetailModal');
+                const content = document.getElementById('reportDetailContent');
+                const catData = APP_STATE.categories.find(c => c.name === report.category);
+                const timeAgo = getTimeAgo(report.created_at);
+                const comments = await fetchComments(report.id);
+                content.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px;">
+                  <div><span style="font-size:2rem;">${catData?.icon||'📌'}</span><h2 style="margin:4px 0;">${report.title}</h2>
+                    <span class="badge ${(report.severity==='high'||report.severity==='critical')?'badge-danger':'badge-warning'}">${report.severity?.toUpperCase()}</span>
+                    ${report.verified?'<span class="badge badge-success">✓ Verified</span>':'<span class="badge badge-warning">⏳ Pending</span>'}
+                    ${report.anonymous?'<span class="badge badge-info">👻 Anonymous</span>':''}
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="document.getElementById('reportDetailModal').style.display='none'" style="border:none;font-size:1.3rem;">✕</button>
+                </div>
+                ${report.image_url?`<img src="${report.image_url}" style="width:100%;max-height:300px;object-fit:cover;border-radius:var(--radius);margin-bottom:12px;" onerror="this.style.display='none'">`:''}
+                ${report.video_url?`<video src="${report.video_url}" controls style="width:100%;max-height:300px;border-radius:var(--radius);margin-bottom:12px;"></video>`:''}
+                <p style="margin:8px 0;">${report.description}</p>
+                <p style="font-size:0.8rem;color:var(--text-muted);"><i class="fas fa-map-marker-alt"></i> ${report.location_name} · ${timeAgo} · Reported by ${report.userName||'Anonymous'}</p>
+                <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;"><span class="badge badge-info">👁 ${report.verification_count} verifications</span></div>
+                ${APP_STATE.isAuthenticated?`<button class="btn btn-success btn-sm" onclick="verifyReportFromDetail(${report.id})" ${report.verified?'disabled':''}><i class="fas fa-check"></i> Verify This Report</button>`:'<p style="font-size:0.8rem;color:var(--text-muted);">Sign in to verify this report.</p>'}
+                <hr style="border-color:var(--border);margin:16px 0;">
+                <h4>Comments (${comments.length})</h4>
+                <div id="commentsArea" style="max-height:200px;overflow-y:auto;margin-bottom:12px;">
+                  ${comments.map(c=>`<div class="card" style="padding:10px;margin:6px 0;"><strong>${c.profiles?.full_name||'User'}</strong>: ${c.content}<br><small style="color:var(--text-muted);">${getTimeAgo(c.created_at)}</small></div>`).join('')}
+                  ${comments.length===0?'<p style="color:var(--text-muted);font-size:0.8rem;">No comments yet.</p>':''}
+                </div>
+                ${APP_STATE.isAuthenticated?`<div style="display:flex;gap:8px;"><input type="text" class="input-field" placeholder="Add a comment..." id="commentInput" style="flex:1;"><button class="btn btn-primary btn-sm" onclick="addCommentFromDetail(${report.id})">Post</button></div>`:''}
+              `;
+                modal.style.display = 'flex';
+            }
+
+            // ─────────────────────────────────────────
+            // EVENT LISTENERS
+            // ─────────────────────────────────────────
+            document.getElementById('hamburgerBtn').addEventListener('click', () => {
+                document.getElementById('navLinks').classList.toggle('open');
+            });
+            document.getElementById('authModal').addEventListener('click', function(e) { if (e.target === this)
+                    toggleAuthModal(); });
+            document.getElementById('reportDetailModal').addEventListener('click', function(e) { if (e.target ===
+                    this) this.style.display = 'none'; });
+            window.addEventListener('resize', () => {
+                updateMobileNavVisibility();
+                if (APP_STATE.mapInstance) setTimeout(() => APP_STATE.mapInstance.invalidateSize(), 200);
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.getElementById('authModal').style.display = 'none';
+                    document.getElementById('reportDetailModal').style.display = 'none';
+                }
+            });
+
+            // ─────────────────────────────────────────
+            // EXPOSE FUNCTIONS TO GLOBAL SCOPE
+            // ─────────────────────────────────────────
+            window.navigateTo = navigateTo;
+            window.toggleAuthModal = toggleAuthModal;
+            window.toggleAuthMode = toggleAuthMode;
+            window.handleAuth = handleAuth;
+            window.handleAnonymousReport = handleAnonymousReport;
+            window.logout = logout;
+            window.goToStep = goToStep;
+            window.handleFileUpload = handleFileUpload;
+            window.handleVideoUpload = handleVideoUpload;
+            window.submitReportToSupabase = submitReportToSupabase;
+            window.openReportDetail = openReportDetail;
+            window.openReportDetailById = openReportDetailById;
+            window.verifyReportFromDetail = verifyReportFromDetail;
+            window.addCommentFromDetail = addCommentFromDetail;
+            window.applyMapFilters = applyMapFilters;
+            window.filterMapSidebar = filterMapSidebar;
+            window.switchDashTab = switchDashTab;
+
+            // ─────────────────────────────────────────
+            // INITIALIZATION
+            // ─────────────────────────────────────────
+            async function init() {
+                updateMobileNavVisibility();
+                await checkSession();
+                await fetchCategories();
+                await fetchReports();
+                navigateTo('home');
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        APP_STATE.reportForm.lat = pos.coords.latitude;
+                        APP_STATE.reportForm.lng = pos.coords.longitude;
+                    }, () => {});
+                }
+                console.log('🛡️ CivicReport Platform Initialized');
+                console.log('📋 Total Reports:', APP_STATE.reports.length);
+                console.log('⏳ Pending:', APP_STATE.pendingReports.length);
+                console.log('👤 Auth:', APP_STATE.isAuthenticated ? 'Logged In' : 'Guest');
+            }
+            init();
+        })();
+    </script>
+</body>
+</html>

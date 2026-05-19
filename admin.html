@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicReport Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0B0F19;
+            --bg-secondary: #111827;
+            --bg-card: #161b28;
+            --text-primary: #FFFFFF;
+            --text-secondary: #b0b8c8;
+            --text-muted: #6b7280;
+            --danger: #EF4444;
+            --success: #10B981;
+            --accent: #6366f1;
+            --border: #2a3040;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter', sans-serif; background:var(--bg-primary); color:var(--text-primary); min-height:100vh; }
+        .container { max-width:1200px; margin:0 auto; padding:20px; }
+        .btn { padding:10px 20px; border-radius:var(--radius-sm); font-weight:600; border:none; cursor:pointer; transition:0.2s; }
+        .btn-primary { background:var(--accent); color:#fff; }
+        .btn-danger { background:var(--danger); color:#fff; }
+        .btn-success { background:var(--success); color:#fff; }
+        .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-primary); }
+        .badge { padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; }
+        .badge-warning { background:rgba(245,158,11,0.2); color:#fcd34d; border:1px solid rgba(245,158,11,0.3); }
+        .badge-danger { background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+        .badge-success { background:rgba(16,185,129,0.2); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+        .card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+        .navbar { height:64px; background:rgba(11,15,25,0.9); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 20px; }
+        .navbar-brand { font-weight:800; font-size:1.3rem; cursor:pointer; }
+        .nav-links { display:flex; gap:10px; margin-left:auto; align-items:center; }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; padding:8px 12px; border-radius:var(--radius-sm); font-size:0.85rem; }
+        .nav-links a.active, .nav-links a:hover { color:var(--text-primary); background:rgba(255,255,255,0.05); }
+        table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+        th { text-align:left; padding:10px; color:var(--text-muted); font-weight:600; border-bottom:1px solid var(--border); }
+        td { padding:10px; border-bottom:1px solid var(--border); }
+        tr:hover td { background:rgba(255,255,255,0.02); }
+        .login-container { max-width:400px; margin:80px auto; }
+        input, select { width:100%; padding:12px; background:#1e2433; border:1px solid var(--border); border-radius:var(--radius-sm); color:#fff; margin-bottom:10px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">🛡️ CivicReport Admin</div>
+        <div class="nav-links" id="navLinks">
+            <a href="#" onclick="switchAdminTab('dashboard')" class="active" data-tab="dashboard">Dashboard</a>
+            <a href="#" onclick="switchAdminTab('moderation')" data-tab="moderation">Moderation</a>
+            <a href="#" onclick="switchAdminTab('users')" data-tab="users">Users</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+    <div id="loginBox" style="display:flex; align-items:center; justify-content:center; min-height:calc(100vh - 64px);">
+        <div class="card" style="width:360px; padding:30px;">
+            <h2 style="margin-bottom:20px;">Admin Login</h2>
+            <input type="email" id="email" placeholder="Admin email" />
+            <input type="password" id="password" placeholder="Password" />
+            <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">Sign In</button>
+            <p id="loginError" style="color:var(--danger); font-size:0.8rem; margin-top:8px;"></p>
+        </div>
+    </div>
+    <div id="adminContent" class="container" style="display:none; padding-top:20px;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://dkpivxujzpkrgijnztqj.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcGl2eHVqenBrcmdpam56dHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NDQ2MzYsImV4cCI6MjA5NDQyMDYzNn0.mim4JS-R_2XAK7xho_hcFIlNT8AjLpOojzOuk5RxkyQ';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null, currentProfile = null;
+
+        async function adminLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                document.getElementById('loginError').textContent = error.message;
+                return;
+            }
+            currentUser = data.user;
+            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (!profile || profile.role !== 'admin') {
+                await supabaseClient.auth.signOut();
+                document.getElementById('loginError').textContent = 'Access denied. Admin only.';
+                return;
+            }
+            currentProfile = profile;
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            switchAdminTab('dashboard');
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.reload();
+        }
+
+        async function switchAdminTab(tab) {
+            document.querySelectorAll('#navLinks a').forEach(a => a.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            const container = document.getElementById('adminContent');
+            switch (tab) {
+                case 'dashboard':
+                    container.innerHTML = `<h2>Admin Dashboard</h2>
+                        <div class="card">Total Reports: <span id="totalReports">Loading...</span></div>
+                        <div class="card">Pending: <span id="pendingCount">0</span></div>`;
+                    loadStats();
+                    break;
+                case 'moderation':
+                    container.innerHTML = `<h2>Moderation Queue</h2><table><thead><tr><th>Title</th><th>Category</th><th>Severity</th><th>Actions</th></tr></thead><tbody id="modTableBody"></tbody></table>`;
+                    loadPendingReports();
+                    break;
+                case 'users':
+                    container.innerHTML = `<h2>Users</h2><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Reputation</th><th>Actions</th></tr></thead><tbody id="usersTableBody"></tbody></table>`;
+                    loadUsers();
+                    break;
+            }
+        }
+
+        async function loadStats() {
+            const { count: total } = await supabaseClient.from('reports').select('*', { count:'exact', head:true });
+            const { count: pending } = await supabaseClient.from('reports').select('*', { count:'exact', head:true }).eq('status','pending');
+            document.getElementById('totalReports').textContent = total;
+            document.getElementById('pendingCount').textContent = pending;
+        }
+
+        async function loadPendingReports() {
+            const { data } = await supabaseClient.from('reports').select('*').eq('status','pending').order('created_at', { ascending:false });
+            const tbody = document.getElementById('modTableBody');
+            tbody.innerHTML = data.map(r => `
+                <tr>
+                    <td>${r.title}</td>
+                    <td>${r.category}</td>
+                    <td>${r.severity}</td>
+                    <td>
+                        <button class="btn btn-success btn-sm" onclick="verifyReport(${r.id})">Verify</button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectReport(${r.id})">Reject</button>
+                        <button class="btn btn-outline btn-sm" onclick="deleteReport(${r.id})">Delete</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        async function verifyReport(id) {
+            await supabaseClient.from('reports').update({ status:'verified', verified:true }).eq('id',id);
+            loadPendingReports();
+            loadStats();
+        }
+        async function rejectReport(id) {
+            await supabaseClient.from('reports').update({ status:'rejected' }).eq('id',id);
+            loadPendingReports();
+            loadStats();
+        }
+        async function deleteReport(id) {
+            await supabaseClient.from('reports').delete().eq('id',id);
+            loadPendingReports();
+            loadStats();
+        }
+
+        async function loadUsers() {
+            const { data: users } = await supabaseClient.from('profiles').select('*, auth_users:auth.users(email)');
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.full_name || 'N/A'}</td>
+                    <td>${u.auth_users?.email || ''}</td>
+                    <td>${u.role}</td>
+                    <td>${u.reputation}</td>
+                    <td>
+                        <select onchange="changeRole('${u.id}', this.value)" style="width:auto;">
+                            <option value="user" ${u.role==='user'?'selected':''}>User</option>
+                            <option value="moderator" ${u.role==='moderator'?'selected':''}>Moderator</option>
+                            <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+                        </select>
+                    </td>
+                </tr>`).join('');
+        }
+
+        async function changeRole(userId, newRole) {
+            await supabaseClient.from('profiles').update({ role:newRole }).eq('id',userId);
+            loadUsers();
+        }
+
+        // Expose global functions
+        window.switchAdminTab = switchAdminTab;
+        window.adminLogin = adminLogin;
+        window.logout = logout;
+        window.verifyReport = verifyReport;
+        window.rejectReport = rejectReport;
+        window.deleteReport = deleteReport;
+        window.changeRole = changeRole;
+
+        // Check existing session
+        (async () => {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                currentUser = user;
+                const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+                if (profile && profile.role === 'admin') {
+                    currentProfile = profile;
+                    document.getElementById('loginBox').style.display = 'none';
+                    document.getElementById('adminContent').style.display = 'block';
+                    switchAdminTab('dashboard');
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
