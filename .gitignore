@@ -1,0 +1,37 @@
+# Environment variables (only needed if you ever add a real .env file)
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.bak
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependency directories (if you later add npm)
+node_modules/
+
+# Build output (if you ever use a build step)
+/dist/
+/build/
+
+# Supabase local development (optional)
+supabase/.branches/
+supabase/.temp/
