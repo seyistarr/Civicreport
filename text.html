@@ -7,7 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- MapLibre GL CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3/dist/maplibre-gl.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
@@ -26,20 +27,20 @@
             --accent: #6366f1;
             --border: #2a3040;
             --border-light: #374151;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.6);
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
             --radius: 12px;
             --radius-sm: 8px;
             --radius-lg: 16px;
-            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background:var(--bg-primary); color:var(--text-primary); line-height:1.6; min-height:100vh; -webkit-font-smoothing:antialiased; }
+        body { font-family:'Inter', sans-serif; background:var(--bg-primary); color:var(--text-primary); line-height:1.6; min-height:100vh; }
         ::-webkit-scrollbar { width:6px; }
         ::-webkit-scrollbar-track { background:var(--bg-primary); }
         ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
         .container { max-width:1280px; margin:0 auto; padding:0 20px; }
-        .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border-radius:var(--radius-sm); font-weight:600; font-size:0.9rem; cursor:pointer; border:none; transition:var(--transition); text-decoration:none; font-family:'Inter', sans-serif; white-space:nowrap; }
+        .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border-radius:var(--radius-sm); font-weight:600; font-size:0.9rem; cursor:pointer; border:none; transition:var(--transition); font-family:'Inter', sans-serif; white-space:nowrap; }
         .btn-primary { background:var(--accent); color:#fff; }
         .btn-primary:hover { background:#4f46e5; transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
         .btn-danger { background:var(--danger); color:#fff; }
@@ -50,14 +51,14 @@
         .btn-outline:hover { border-color:var(--accent); background:rgba(99,102,241,0.1); }
         .btn-sm { padding:8px 16px; font-size:0.8rem; }
         .btn-lg { padding:16px 32px; font-size:1rem; border-radius:var(--radius); }
-        .badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; letter-spacing:0.02em; }
+        .badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; }
         .badge-danger { background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
         .badge-warning { background:rgba(245,158,11,0.2); color:#fcd34d; border:1px solid rgba(245,158,11,0.3); }
         .badge-success { background:rgba(16,185,129,0.2); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
         .badge-info { background:rgba(59,130,246,0.2); color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
         .card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; transition:var(--transition); }
         .card:hover { border-color:var(--border-light); box-shadow:var(--shadow); }
-        .input-field { width:100%; padding:12px 16px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:'Inter', sans-serif; font-size:0.9rem; transition:var(--transition); outline:none; }
+        .input-field { width:100%; padding:12px 16px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:'Inter', sans-serif; font-size:0.9rem; outline:none; }
         .input-field:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
         .input-field::placeholder { color:var(--text-muted); }
         textarea.input-field { resize:vertical; min-height:100px; }
@@ -65,73 +66,73 @@
         .modal { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-lg); padding:28px; max-width:560px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow-lg); animation:slideUp 0.3s ease; }
         @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
         @keyframes slideUp { from{opacity:0; transform:translateY(30px);} to{opacity:1; transform:translateY(0);} }
-        .fullscreen-modal { position:fixed; inset:0; background:var(--bg-secondary); z-index:2000; display:flex; flex-direction:column; animation:fadeIn 0.2s; }
+        .fullscreen-modal { position:fixed; inset:0; background:var(--bg-secondary); z-index:2000; display:flex; flex-direction:column; }
         .fullscreen-modal .modal-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
         .fullscreen-modal .modal-header .back-btn { background:none; border:none; color:var(--text-primary); font-size:1.5rem; cursor:pointer; padding:4px 8px; }
         .fullscreen-modal .modal-body { flex:1; overflow-y:auto; padding:20px; }
         .navbar { position:sticky; top:0; z-index:100; background:rgba(11,15,25,0.85); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:0 20px; height:64px; display:flex; align-items:center; justify-content:space-between; }
-        .navbar-brand { font-weight:800; font-size:1.3rem; letter-spacing:-0.02em; display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text-primary); text-decoration:none; }
+        .navbar-brand { font-weight:800; font-size:1.3rem; display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text-primary); }
         .navbar-brand .icon { width:36px; height:36px; background:var(--accent); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
         .nav-links { display:flex; align-items:center; gap:8px; list-style:none; }
-        .nav-links a { color:var(--text-secondary); text-decoration:none; padding:8px 14px; border-radius:var(--radius-sm); font-weight:500; font-size:0.85rem; transition:var(--transition); cursor:pointer; }
+        .nav-links a { color:var(--text-secondary); text-decoration:none; padding:8px 14px; border-radius:var(--radius-sm); font-weight:500; font-size:0.85rem; cursor:pointer; }
         .nav-links a:hover, .nav-links a.active { color:var(--text-primary); background:rgba(255,255,255,0.05); }
         .nav-actions { display:flex; align-items:center; gap:10px; }
         .avatar-sm { width:34px; height:34px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; cursor:pointer; }
         .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:8px; }
-        .hamburger span { width:24px; height:2px; background:var(--text-primary); border-radius:2px; transition:var(--transition); }
-        .hero { display:grid; grid-template-columns:1fr 1fr; gap:40px; padding:60px 0; align-items:center; min-height:calc(100vh - 64px - 40px); }
-        .hero-content h1 { font-size:clamp(2rem,5vw,3.5rem); font-weight:900; letter-spacing:-0.03em; line-height:1.1; margin-bottom:16px; }
-        .hero-content h1 .highlight { background:linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .hamburger span { width:24px; height:2px; background:var(--text-primary); border-radius:2px; }
+        .hero { display:grid; grid-template-columns:1fr 1fr; gap:40px; padding:60px 0; align-items:center; }
+        .hero-content h1 { font-size:clamp(2rem,5vw,3.5rem); font-weight:900; line-height:1.1; margin-bottom:16px; }
+        .hero-content h1 .highlight { background:linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
         .hero-content p { color:var(--text-secondary); font-size:1.1rem; margin-bottom:28px; max-width:480px; }
         .hero-cta { display:flex; gap:12px; flex-wrap:wrap; }
-        .hero-map { width:100%; height:420px; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); box-shadow:var(--shadow-lg); background:var(--bg-card); }
-        .hero-map .leaflet-container { height:100%; width:100%; border-radius:var(--radius-lg); }
-        .stats-bar { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; padding:24px 0 40px; }
+        .hero-map { width:100%; height:420px; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); }
+        .map-container { width:100%; height:100%; }
+        .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; padding:24px 0 40px; }
         .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; }
-        .stat-card .stat-value { font-size:2rem; font-weight:800; letter-spacing:-0.02em; }
+        .stat-card .stat-value { font-size:2rem; font-weight:800; }
         .stat-card .stat-label { color:var(--text-muted); font-size:0.85rem; margin-top:4px; }
         .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-        .section-header h2 { font-size:1.4rem; font-weight:700; letter-spacing:-0.02em; }
+        .section-header h2 { font-size:1.4rem; font-weight:700; }
         .incident-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
-        .incident-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:var(--transition); cursor:pointer; }
+        .incident-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:var(--transition); }
         .incident-card:hover { border-color:var(--border-light); box-shadow:var(--shadow); transform:translateY(-2px); }
         .incident-card .card-img { width:100%; height:180px; object-fit:cover; background:var(--bg-tertiary); }
         .incident-card .card-video-thumb { width:100%; height:180px; display:flex; align-items:center; justify-content:center; background:var(--bg-tertiary); color:var(--text-muted); font-size:3rem; }
         .incident-card .card-body { padding:14px 16px; }
         .incident-card .card-category { font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; }
-        .incident-card .card-title { font-weight:600; font-size:0.95rem; margin-bottom:4px; line-height:1.3; }
+        .incident-card .card-title { font-weight:600; font-size:0.95rem; margin-bottom:4px; }
         .incident-card .card-meta { font-size:0.78rem; color:var(--text-muted); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-        .category-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; }
-        .category-btn { background:var(--bg-card); border:2px solid var(--border); border-radius:var(--radius); padding:20px 16px; text-align:center; cursor:pointer; transition:var(--transition); color:var(--text-primary); font-family:'Inter', sans-serif; font-weight:500; font-size:0.85rem; }
+        .category-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:12px; }
+        .category-btn { background:var(--bg-card); border:2px solid var(--border); border-radius:var(--radius); padding:20px 16px; text-align:center; cursor:pointer; color:var(--text-primary); font-family:'Inter', sans-serif; font-weight:500; font-size:0.85rem; }
         .category-btn:hover, .category-btn.selected { border-color:var(--accent); background:rgba(99,102,241,0.1); transform:translateY(-2px); }
         .category-btn .cat-icon { font-size:2rem; display:block; margin-bottom:8px; }
         .map-page-container { display:flex; height:calc(100vh - 64px); }
         .map-sidebar { width:380px; background:var(--bg-secondary); border-right:1px solid var(--border); overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; }
         .map-main { flex:1; position:relative; }
-        .map-main .leaflet-container { width:100%; height:100%; }
+        .map-main .map-container { width:100%; height:100%; }
         .map-filters { display:flex; gap:8px; flex-wrap:wrap; }
-        .map-filter-chip { padding:6px 14px; border-radius:20px; font-size:0.78rem; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--bg-card); color:var(--text-secondary); transition:var(--transition); white-space:nowrap; }
+        .map-filter-chip { padding:6px 14px; border-radius:20px; font-size:0.78rem; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--bg-card); color:var(--text-secondary); }
         .map-filter-chip.active { background:var(--accent); color:#fff; border-color:var(--accent); }
         .report-form-container { max-width:680px; margin:0 auto; padding:40px 20px; }
-        .form-step { display:none; animation:fadeIn 0.3s ease; }
-        .form-step.active { display:block; }
+        .form-step { display:none; }
+        .form-step.active { display:block; animation:fadeIn 0.3s; }
         .step-indicator { display:flex; gap:8px; margin-bottom:28px; align-items:center; }
         .step-dot { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; background:var(--bg-tertiary); color:var(--text-muted); border:2px solid var(--border); }
         .step-dot.active { background:var(--accent); color:#fff; border-color:var(--accent); }
         .step-dot.done { background:var(--success); color:#fff; border-color:var(--success); }
-        .step-line { flex:1; height:2px; background:var(--border); border-radius:2px; }
+        .step-line { flex:1; height:2px; background:var(--border); }
         .step-line.done { background:var(--success); }
-        .upload-zone { border:2px dashed var(--border-light); border-radius:var(--radius); padding:40px; text-align:center; cursor:pointer; transition:var(--transition); background:var(--bg-input); }
+        .upload-zone { border:2px dashed var(--border-light); border-radius:var(--radius); padding:40px; text-align:center; cursor:pointer; background:var(--bg-input); }
         .upload-zone:hover { border-color:var(--accent); background:rgba(99,102,241,0.05); }
         .upload-zone i { font-size:3rem; color:var(--text-muted); margin-bottom:12px; }
-        .upload-preview { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-        .upload-preview img { width:80px; height:80px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border); }
+        .media-preview { margin-top:12px; }
+        .media-preview img, .media-preview video { width:100%; max-height:200px; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
         .dashboard-layout { display:flex; min-height:calc(100vh - 64px); }
         .dashboard-sidebar { width:250px; background:var(--bg-secondary); border-right:1px solid var(--border); padding:20px 14px; display:flex; flex-direction:column; gap:4px; }
-        .dashboard-sidebar a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--radius-sm); color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.85rem; transition:var(--transition); cursor:pointer; }
+        .dashboard-sidebar a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--radius-sm); color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.85rem; cursor:pointer; }
         .dashboard-sidebar a:hover, .dashboard-sidebar a.active { background:rgba(255,255,255,0.05); color:var(--text-primary); }
         .dashboard-main { flex:1; padding:24px 28px; overflow-y:auto; }
-        .dashboard-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; margin-bottom:24px; }
+        .dashboard-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:16px; margin-bottom:24px; }
         .dashboard-stat { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; }
         .dashboard-stat .stat-icon { width:42px; height:42px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:1.2rem; margin-bottom:10px; }
         .dashboard-stat .stat-num { font-size:1.8rem; font-weight:800; }
@@ -142,50 +143,25 @@
         .toast-error { background:#7f1d1d; color:#fee2e2; border:1px solid #dc2626; }
         .toast-info { background:#1e3a5f; color:#dbeafe; border:1px solid #3b82f6; }
         @keyframes slideIn { from{opacity:0; transform:translateX(100px);} to{opacity:1; transform:translateX(0);} }
-        .mobile-bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(17,24,39,0.95); backdrop-filter:blur(20px); border-top:1px solid var(--border); padding:8px 16px; z-index:200; justify-content:space-around; align-items:center; }
-        .mobile-bottom-nav a { display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-muted); text-decoration:none; font-size:0.65rem; font-weight:500; transition:var(--transition); cursor:pointer; }
+        .mobile-bottom-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(17,24,39,0.95); backdrop-filter:blur(20px); border-top:1px solid var(--border); padding:8px 16px; z-index:200; justify-content:space-around; }
+        .mobile-bottom-nav a { display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-muted); text-decoration:none; font-size:0.65rem; font-weight:500; cursor:pointer; }
         .mobile-bottom-nav a.active { color:var(--accent); }
-        .fab-btn { position:fixed; bottom:90px; right:20px; width:56px; height:56px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.5rem; cursor:pointer; z-index:200; box-shadow:0 8px 28px rgba(99,102,241,0.5); transition:var(--transition); display:none; align-items:center; justify-content:center; }
-        .fab-btn:hover { transform:scale(1.08); box-shadow:0 12px 36px rgba(99,102,241,0.7); }
-        /* Lightbox */
+        .fab-btn { position:fixed; bottom:90px; right:20px; width:56px; height:56px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.5rem; cursor:pointer; z-index:200; box-shadow:0 8px 28px rgba(99,102,241,0.5); display:none; align-items:center; justify-content:center; }
         .image-lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; align-items:center; justify-content:center; flex-direction:column; cursor:zoom-out; }
-        .image-lightbox img { max-width:95vw; max-height:95vh; object-fit:contain; box-shadow:0 0 40px rgba(0,0,0,0.8); border-radius:8px; }
+        .image-lightbox img { max-width:95vw; max-height:95vh; object-fit:contain; border-radius:8px; }
         .image-lightbox .close-btn { position:absolute; top:20px; right:20px; background:none; border:none; color:#fff; font-size:2rem; cursor:pointer; }
-        @media (max-width:1024px) {
-            .hero { grid-template-columns:1fr; gap:24px; padding:30px 0; }
-            .hero-map { height:300px; }
-            .map-sidebar { width:280px; }
-            .dashboard-sidebar { width:200px; }
-        }
+        @media (max-width:1024px) { .hero{grid-template-columns:1fr; gap:24px; padding:30px 0;} .hero-map{height:300px;} .map-sidebar{width:280px;} .dashboard-sidebar{width:200px;} }
         @media (max-width:768px) {
-            .nav-links { display:none; }
-            .hamburger { display:flex; }
-            .nav-links.open { display:flex; flex-direction:column; position:absolute; top:64px; left:0; right:0; background:var(--bg-secondary); border-bottom:1px solid var(--border); padding:16px; gap:4px; z-index:99; }
-            .stats-bar { grid-template-columns:repeat(2,1fr); gap:10px; }
-            .map-page-container { flex-direction:column; height:auto; }
-            .map-sidebar { width:100%; max-height:300px; border-right:none; border-bottom:1px solid var(--border); }
-            .map-main { height:400px; }
-            .dashboard-layout { flex-direction:column; }
-            .dashboard-sidebar { display:none; }
-            .mobile-bottom-nav { display:flex; }
-            .fab-btn { display:flex; }
-            .dashboard-main { padding:16px; padding-bottom:90px; }
-            .incident-grid { grid-template-columns:1fr; }
-            .category-grid { grid-template-columns:repeat(3,1fr); gap:8px; }
+            .nav-links{display:none;} .hamburger{display:flex;} .nav-links.open{display:flex; flex-direction:column; position:absolute; top:64px; left:0; right:0; background:var(--bg-secondary); border-bottom:1px solid var(--border); padding:16px; gap:4px; z-index:99;}
+            .stats-bar{grid-template-columns:repeat(2,1fr);} .map-page-container{flex-direction:column; height:auto;} .map-sidebar{width:100%; max-height:300px; border-right:none; border-bottom:1px solid var(--border);} .map-main{height:400px;}
+            .dashboard-layout{flex-direction:column;} .dashboard-sidebar{display:none;} .mobile-bottom-nav{display:flex;} .fab-btn{display:flex;} .dashboard-main{padding:16px; padding-bottom:90px;} .incident-grid{grid-template-columns:1fr;} .category-grid{grid-template-columns:repeat(3,1fr);}
         }
-        @media (max-width:480px) {
-            .hero-content h1 { font-size:1.6rem; }
-            .btn-lg { padding:12px 20px; font-size:0.85rem; }
-            .category-grid { grid-template-columns:repeat(2,1fr); }
-            .stats-bar { grid-template-columns:1fr 1fr; }
-        }
+        @media (max-width:480px) { .hero-content h1{font-size:1.6rem;} .btn-lg{padding:12px 20px;} .category-grid{grid-template-columns:repeat(2,1fr);} .stats-bar{grid-template-columns:1fr 1fr;} }
     </style>
 </head>
 <body>
     <nav class="navbar" id="navbar">
-        <a class="navbar-brand" href="#" onclick="navigateTo('home')">
-            <div class="icon"><i class="fas fa-shield-alt"></i></div>CivicReport
-        </a>
+        <a class="navbar-brand" href="#" onclick="navigateTo('home')"><div class="icon"><i class="fas fa-shield-alt"></i></div>CivicReport</a>
         <ul class="nav-links" id="navLinks">
             <li><a href="#" onclick="navigateTo('home')" class="active" data-nav="home"><i class="fas fa-home"></i> Home</a></li>
             <li><a href="#" onclick="navigateTo('map')" data-nav="map"><i class="fas fa-map-marked-alt"></i> Live Map</a></li>
@@ -207,11 +183,11 @@
         <a href="#" onclick="navigateTo('dashboard')" data-mob-nav="dashboard"><i class="fas fa-bell"></i>Alerts</a>
         <a href="#" onclick="navigateTo('dashboard')" data-mob-nav="profile"><i class="fas fa-user"></i>Profile</a>
     </nav>
-    <button class="fab-btn" id="fabBtn" title="Quick Report" onclick="navigateTo('report')"><i class="fas fa-plus"></i></button>
+    <button class="fab-btn" id="fabBtn" onclick="navigateTo('report')"><i class="fas fa-plus"></i></button>
 
     <!-- Auth Modal -->
     <div class="modal-overlay" id="authModal" style="display:none;">
-        <div class="modal" id="authModalContent">
+        <div class="modal">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                 <h3 id="authModalTitle">Sign In</h3>
                 <button class="btn btn-outline btn-sm" onclick="toggleAuthModal()" style="border:none;font-size:1.2rem;">✕</button>
@@ -221,20 +197,15 @@
                     <input type="email" class="input-field" placeholder="Email address" id="authEmail">
                     <input type="password" class="input-field" placeholder="Password" id="authPassword">
                     <input type="text" class="input-field" placeholder="Full name (for sign up)" id="authName" style="display:none;">
-                    <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="authSubmitBtn" onclick="handleAuth()">Sign In</button>
+                    <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" onclick="handleAuth()">Sign In</button>
                     <p style="text-align:center;font-size:0.8rem;color:var(--text-muted);">
-                        <span id="authToggleText">Don't have an account?</span>
-                        <a href="#" style="color:var(--accent);" id="authToggleLink" onclick="toggleAuthMode()">Sign Up</a>
+                        <span id="authToggleText">Don't have an account?</span> <a href="#" style="color:var(--accent);" onclick="toggleAuthMode()">Sign Up</a>
                     </p>
                     <hr style="border-color:var(--border);">
-                    <button class="btn btn-outline btn-lg" style="width:100%;justify-content:center;" onclick="handleAnonymousReport()">
-                        <i class="fas fa-ghost"></i> Continue as Guest Reporter
-                    </button>
+                    <button class="btn btn-outline btn-lg" style="width:100%;justify-content:center;" onclick="handleAnonymousReport()"><i class="fas fa-ghost"></i> Continue as Guest Reporter</button>
                 </div>
             </div>
-            <div id="authLoading" style="display:none;text-align:center;padding:20px;">
-                <i class="fas fa-spinner fa-spin"></i> Please wait...
-            </div>
+            <div id="authLoading" style="display:none;text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Please wait...</div>
         </div>
     </div>
 
@@ -247,850 +218,669 @@
         <div class="modal-body" id="reportFullscreenBody"></div>
     </div>
 
-    <!-- Fullsize Image Lightbox -->
+    <!-- Image Lightbox -->
     <div class="image-lightbox" id="imageLightbox" onclick="closeImageLightbox()">
         <button class="close-btn" onclick="closeImageLightbox()">✕</button>
-        <img id="lightboxImage" src="" alt="Full size image" onclick="event.stopPropagation()">
+        <img id="lightboxImage" src="" alt="Full size" onclick="event.stopPropagation()">
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@3/dist/maplibre-gl.js"></script>
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         (function() {
             const SUPABASE_URL = 'https://dkpivxujzpkrgijnztqj.supabase.co';
             const SUPABASE_KEY = 'sb_publishable_ZFxG1w4BNrc6YDfGip9bxw_x9MbvHm8';
             const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            const CLOUDINARY_CLOUD_NAME = 'duzyf1kda';
+            const CLOUDINARY_IMAGE_PRESET = 'image_upload';
+            const CLOUDINARY_VIDEO_PRESET = 'video_upload';
 
+            // ----- STATE -----
             const APP_STATE = {
-                currentUser: null,
-                currentProfile: null,
-                isAuthenticated: false,
-                isAuthModeSignUp: false,
-                currentPage: 'home',
-                reports: [],
-                categories: [],
-                pendingReports: [],
-                reportForm: {
-                    step: 1,
-                    category: null,
-                    lat: null,
-                    lng: null,
-                    locationName: '',
-                    images: [],
-                    videoFile: null,
-                    title: '',
-                    description: '',
-                    severity: 'medium',
-                    anonymous: false,
-                },
-                mapInstance: null,
-                mapMarkers: [],
-                isLoading: false,
+                currentUser: null, currentProfile: null, isAuthenticated: false, isAuthModeSignUp: false,
+                currentPage: 'home', reports: [], categories: [], pendingReports: [],
+                reportForm: { step:1, category:null, lat:null, lng:null, locationName:'', mediaFile:null, title:'', description:'', severity:'medium', anonymous:false },
+                maps: { hero: null, full: null, report: null }, userLocation: null, isLoading: false
             };
 
-            // ── TOAST ──────────────────────────
+            // ----- TOAST -----
             function showToast(msg, type='info') {
                 const container = document.getElementById('toastContainer');
                 const toast = document.createElement('div');
                 toast.className = `toast toast-${type}`;
                 toast.textContent = msg;
                 container.appendChild(toast);
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(100px)';
-                    toast.style.transition = '0.3s ease';
-                    setTimeout(() => toast.remove(), 300);
-                }, 3500);
+                setTimeout(() => { toast.style.opacity='0'; toast.style.transform='translateX(100px)'; setTimeout(()=>toast.remove(), 300); }, 3500);
             }
 
-            // ── AUTH ──────────────────────────
+            // ----- AUTH -----
             function toggleAuthModal() {
                 const modal = document.getElementById('authModal');
                 modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
-                resetAuthForm();
+                if (modal.style.display === 'none') resetAuthForm();
             }
             function resetAuthForm() {
-                document.getElementById('authEmail').value = '';
-                document.getElementById('authPassword').value = '';
-                document.getElementById('authName').value = '';
-                APP_STATE.isAuthModeSignUp = false;
-                document.getElementById('authLoading').style.display = 'none';
-                document.getElementById('authFormArea').style.display = 'block';
+                document.getElementById('authEmail').value=''; document.getElementById('authPassword').value='';
+                document.getElementById('authName').value=''; APP_STATE.isAuthModeSignUp=false;
+                document.getElementById('authLoading').style.display='none'; document.getElementById('authFormArea').style.display='block';
                 updateAuthFormUI();
             }
-            function toggleAuthMode() {
-                APP_STATE.isAuthModeSignUp = !APP_STATE.isAuthModeSignUp;
-                updateAuthFormUI();
-            }
+            function toggleAuthMode() { APP_STATE.isAuthModeSignUp = !APP_STATE.isAuthModeSignUp; updateAuthFormUI(); }
             function updateAuthFormUI() {
-                const title = document.getElementById('authModalTitle');
-                const submitBtn = document.getElementById('authSubmitBtn');
-                const toggleText = document.getElementById('authToggleText');
-                const toggleLink = document.getElementById('authToggleLink');
-                const nameField = document.getElementById('authName');
-                if (APP_STATE.isAuthModeSignUp) {
-                    title.textContent = 'Create Account';
-                    submitBtn.textContent = 'Sign Up';
-                    toggleText.textContent = 'Already have an account?';
-                    toggleLink.textContent = 'Sign In';
-                    nameField.style.display = 'block';
+                const title=document.getElementById('authModalTitle'), submit=document.getElementById('authSubmitBtn');
+                const toggleText=document.getElementById('authToggleText'), toggleLink=document.getElementById('authToggleLink');
+                const nameField=document.getElementById('authName');
+                if(APP_STATE.isAuthModeSignUp) {
+                    title.textContent='Create Account'; submit.textContent='Sign Up';
+                    toggleText.textContent='Already have an account?'; toggleLink.textContent='Sign In';
+                    nameField.style.display='block';
                 } else {
-                    title.textContent = 'Sign In';
-                    submitBtn.textContent = 'Sign In';
-                    toggleText.textContent = "Don't have an account?";
-                    toggleLink.textContent = 'Sign Up';
-                    nameField.style.display = 'none';
+                    title.textContent='Sign In'; submit.textContent='Sign In';
+                    toggleText.textContent="Don't have an account?"; toggleLink.textContent='Sign Up';
+                    nameField.style.display='none';
                 }
             }
-
             async function handleAuth() {
-                const email = document.getElementById('authEmail').value.trim();
-                const password = document.getElementById('authPassword').value.trim();
-                const name = document.getElementById('authName').value.trim();
-                if (!email || !password) { showToast('Please fill in all required fields.', 'error'); return; }
-                if (APP_STATE.isAuthModeSignUp && !name) { showToast('Please enter your full name.', 'error'); return; }
-                document.getElementById('authFormArea').style.display = 'none';
-                document.getElementById('authLoading').style.display = 'block';
+                const email=document.getElementById('authEmail').value.trim();
+                const password=document.getElementById('authPassword').value.trim();
+                const name=document.getElementById('authName').value.trim();
+                if(!email||!password) { showToast('Please fill all fields.','error'); return; }
+                if(APP_STATE.isAuthModeSignUp && !name) { showToast('Please enter your full name.','error'); return; }
+                document.getElementById('authFormArea').style.display='none';
+                document.getElementById('authLoading').style.display='block';
                 try {
-                    if (APP_STATE.isAuthModeSignUp) {
-                        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-                        if (error) throw error;
-                        if (data.user) {
-                            await supabaseClient.from('profiles').upsert({ id: data.user.id, full_name: name, role: 'user', reputation: 0 });
-                            APP_STATE.currentUser = data.user;
-                            APP_STATE.currentProfile = { id: data.user.id, full_name: name, role: 'user', reputation: 0 };
-                            APP_STATE.isAuthenticated = true;
-                            showToast('Account created! Welcome, ' + name + '.', 'success');
+                    if(APP_STATE.isAuthModeSignUp) {
+                        const {data,error}=await supabaseClient.auth.signUp({email,password});
+                        if(error) throw error;
+                        if(data.user) {
+                            await supabaseClient.from('profiles').upsert({id:data.user.id, full_name:name, role:'user', reputation:0});
+                            APP_STATE.currentUser=data.user; APP_STATE.currentProfile={id:data.user.id, full_name:name, role:'user', reputation:0};
+                            APP_STATE.isAuthenticated=true; showToast('Account created! Welcome, '+name+'.','success');
                         }
                     } else {
-                        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                        if (error) throw error;
-                        if (data.user) {
-                            APP_STATE.currentUser = data.user;
-                            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', data.user.id).single();
-                            APP_STATE.currentProfile = profile || { id: data.user.id, full_name: email.split('@')[0], role: 'user', reputation: 0 };
-                            APP_STATE.isAuthenticated = true;
-                            showToast('Welcome back, ' + (APP_STATE.currentProfile.full_name || email.split('@')[0]) + '!', 'success');
+                        const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+                        if(error) throw error;
+                        if(data.user) {
+                            APP_STATE.currentUser=data.user;
+                            const {data:profile}=await supabaseClient.from('profiles').select('*').eq('id',data.user.id).single();
+                            APP_STATE.currentProfile=profile||{id:data.user.id, full_name:email.split('@')[0], role:'user', reputation:0};
+                            APP_STATE.isAuthenticated=true; showToast('Welcome back, '+(APP_STATE.currentProfile.full_name||email.split('@')[0])+'!','success');
                         }
                     }
-                    toggleAuthModal();
-                    updateAuthUI();
-                    if (APP_STATE.currentPage === 'dashboard') navigateTo('dashboard');
-                } catch (err) {
-                    showToast(err.message || 'Authentication failed.', 'error');
-                    document.getElementById('authFormArea').style.display = 'block';
-                    document.getElementById('authLoading').style.display = 'none';
-                }
+                    toggleAuthModal(); updateAuthUI();
+                    if(APP_STATE.currentPage==='dashboard') navigateTo('dashboard');
+                } catch(err) { showToast(err.message||'Authentication failed.','error'); resetAuthForm(); }
             }
             function handleAnonymousReport() {
-                APP_STATE.isAuthenticated = false;
-                APP_STATE.currentUser = null;
-                toggleAuthModal();
-                navigateTo('report');
-                APP_STATE.reportForm.anonymous = true;
-                showToast('You are reporting anonymously.', 'info');
+                APP_STATE.isAuthenticated=false; APP_STATE.currentUser=null;
+                toggleAuthModal(); navigateTo('report'); APP_STATE.reportForm.anonymous=true;
+                showToast('Reporting anonymously.','info');
             }
             async function updateAuthUI() {
-                const authBtn = document.getElementById('authBtn');
-                const avatar = document.getElementById('userAvatar');
-                if (APP_STATE.isAuthenticated && APP_STATE.currentUser) {
-                    authBtn.style.display = 'none';
-                    avatar.style.display = 'flex';
-                    avatar.textContent = (APP_STATE.currentProfile?.full_name || 'U').charAt(0).toUpperCase();
-                } else {
-                    authBtn.style.display = 'inline-flex';
-                    avatar.style.display = 'none';
-                }
+                const authBtn=document.getElementById('authBtn'), avatar=document.getElementById('userAvatar');
+                if(APP_STATE.isAuthenticated) {
+                    authBtn.style.display='none'; avatar.style.display='flex';
+                    avatar.textContent=(APP_STATE.currentProfile?.full_name||'U').charAt(0).toUpperCase();
+                } else { authBtn.style.display='inline-flex'; avatar.style.display='none'; }
             }
-            async function logout() {
-                await supabaseClient.auth.signOut();
-                APP_STATE.currentUser = null;
-                APP_STATE.currentProfile = null;
-                APP_STATE.isAuthenticated = false;
-                updateAuthUI();
-                navigateTo('home');
-                showToast('You have been logged out.', 'info');
-            }
+            async function logout() { await supabaseClient.auth.signOut(); APP_STATE.currentUser=null; APP_STATE.currentProfile=null; APP_STATE.isAuthenticated=false; updateAuthUI(); navigateTo('home'); showToast('Logged out.','info'); }
             async function checkSession() {
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                if (user) {
-                    APP_STATE.currentUser = user;
-                    APP_STATE.isAuthenticated = true;
-                    const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-                    APP_STATE.currentProfile = profile || { id: user.id, full_name: user.email?.split('@')[0], role: 'user', reputation: 0 };
+                const {data:{user}}=await supabaseClient.auth.getUser();
+                if(user) {
+                    APP_STATE.currentUser=user; APP_STATE.isAuthenticated=true;
+                    const {data:profile}=await supabaseClient.from('profiles').select('*').eq('id',user.id).single();
+                    APP_STATE.currentProfile=profile||{id:user.id, full_name:user.email?.split('@')[0], role:'user', reputation:0};
                 }
                 updateAuthUI();
             }
 
-            // ── CATEGORIES ────────────────────
+            // ----- CATEGORIES -----
             async function fetchCategories() {
-                const { data } = await supabaseClient.from('categories').select('*').order('name');
-                if (data && data.length > 0) {
-                    APP_STATE.categories = data.map(c => ({ ...c, icon: getCategoryIcon(c.name), color: getCategoryColor(c.name) }));
-                } else {
-                    APP_STATE.categories = [
-                        { id:1, name:'Fire', icon:'fa-fire', color:'#EF4444' },
-                        { id:2, name:'Flood', icon:'fa-water', color:'#3B82F6' },
-                        { id:3, name:'Accident', icon:'fa-car-burst', color:'#F59E0B' },
-                        { id:4, name:'Crime', icon:'fa-gun', color:'#EF4444' },
-                        { id:5, name:'Road Issue', icon:'fa-road', color:'#F59E0B' },
-                        { id:6, name:'Electricity', icon:'fa-bolt', color:'#6366f1' },
-                    ];
-                }
+                const {data}=await supabaseClient.from('categories').select('*').order('name');
+                if(data&&data.length>0) APP_STATE.categories=data.map(c=>({...c, icon:getCatIcon(c.name), color:getCatColor(c.name)}));
+                else APP_STATE.categories=[{id:1,name:'Fire',icon:'fa-fire',color:'#EF4444'},{id:2,name:'Flood',icon:'fa-water',color:'#3B82F6'},{id:3,name:'Accident',icon:'fa-car-burst',color:'#F59E0B'},{id:4,name:'Crime',icon:'fa-gun',color:'#EF4444'},{id:5,name:'Road Issue',icon:'fa-road',color:'#F59E0B'},{id:6,name:'Electricity',icon:'fa-bolt',color:'#6366f1'}];
             }
-            function getCategoryIcon(name) {
-                const map = { 'Fire':'fa-fire', 'Flood':'fa-water', 'Accident':'fa-car-burst', 'Crime':'fa-gun', 'Road Issue':'fa-road', 'Electricity':'fa-bolt' };
-                return map[name] || 'fa-circle-question';
-            }
-            function getCategoryColor(name) {
-                const map = { 'Fire':'#EF4444', 'Flood':'#3B82F6', 'Accident':'#F59E0B', 'Crime':'#EF4444', 'Road Issue':'#F59E0B', 'Electricity':'#6366f1' };
-                return map[name] || '#6366f1';
-            }
+            function getCatIcon(n){ const m={'Fire':'fa-fire','Flood':'fa-water','Accident':'fa-car-burst','Crime':'fa-gun','Road Issue':'fa-road','Electricity':'fa-bolt'}; return m[n]||'fa-circle-question'; }
+            function getCatColor(n){ const m={'Fire':'#EF4444','Flood':'#3B82F6','Accident':'#F59E0B','Crime':'#EF4444','Road Issue':'#F59E0B','Electricity':'#6366f1'}; return m[n]||'#6366f1'; }
 
-            // ── DATA FETCHING ─────────────────
+            // ----- DATA -----
             async function fetchReports() {
-                const { data, error } = await supabaseClient
-                    .from('reports')
-                    .select('*, profiles:user_id(username, avatar_url)')
-                    .neq('status', 'rejected')
-                    .order('created_at', { ascending: false });
-                if (data) {
-                    APP_STATE.reports = data.map(r => ({
-                        ...r,
-                        userName: r.anonymous ? (r.anonymous_name || 'Anonymous') : (r.profiles?.username || `User‑${r.user_id?.substring(0,8) || 'unknown'}`),
-                    }));
-                    APP_STATE.pendingReports = APP_STATE.reports.filter(r => r.status === 'pending');
+                const {data,error}=await supabaseClient.from('reports').select('*, profiles:user_id(username,avatar_url)').neq('status','rejected').order('created_at',{ascending:false});
+                if(data) {
+                    APP_STATE.reports=data.map(r=>({...r, userName: r.anonymous?(r.anonymous_name||'Anonymous'):(r.profiles?.username||`User‑${r.user_id?.substring(0,8)||'unknown'}`)}));
+                    APP_STATE.pendingReports=APP_STATE.reports.filter(r=>r.status==='pending');
                 }
                 return APP_STATE.reports;
             }
             async function fetchReportById(id) {
-                const { data } = await supabaseClient.from('reports').select('*, profiles:user_id(username)').eq('id', id).single();
-                if (data) {
-                    data.userName = data.anonymous ? (data.anonymous_name || 'Anonymous') : (data.profiles?.username || `User‑${data.user_id?.substring(0,8)}`);
-                }
+                const {data}=await supabaseClient.from('reports').select('*, profiles:user_id(username)').eq('id',id).single();
+                if(data) data.userName=data.anonymous?(data.anonymous_name||'Anonymous'):(data.profiles?.username||`User‑${data.user_id?.substring(0,8)}`);
                 return data;
             }
             async function fetchComments(reportId) {
-                const { data } = await supabaseClient.from('comments').select('*, profiles:user_id(username)').eq('report_id', reportId).order('created_at', { ascending: true });
-                return data || [];
+                const {data}=await supabaseClient.from('comments').select('*, profiles:user_id(username)').eq('report_id',reportId).order('created_at',{ascending:true});
+                return data||[];
             }
 
-            // ── FILE UPLOAD ───────────────────
-            async function uploadImage(file) {
-                const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-                const { error } = await supabaseClient.storage.from('report-images').upload(fileName, file);
-                if (error) { showToast('Image upload failed: ' + error.message, 'error'); return null; }
-                const { data: { publicUrl } } = supabaseClient.storage.from('report-images').getPublicUrl(fileName);
-                return publicUrl;
-            }
-            async function uploadVideo(file) {
-                const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-                const { error } = await supabaseClient.storage.from('report-videos').upload(fileName, file);
-                if (error) { showToast('Video upload failed: ' + error.message, 'error'); return null; }
-                const { data: { publicUrl } } = supabaseClient.storage.from('report-videos').getPublicUrl(fileName);
-                return publicUrl;
+            // ----- CLOUDINARY -----
+            async function uploadToCloudinary(file) {
+                const isVideo=file.type.startsWith('video');
+                const resourceType=isVideo?'video':'image';
+                const preset=isVideo?CLOUDINARY_VIDEO_PRESET:CLOUDINARY_IMAGE_PRESET;
+                const fd=new FormData(); fd.append('file',file); fd.append('upload_preset',preset);
+                const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,{method:'POST',body:fd});
+                const d=await res.json();
+                if(d.secure_url) return {url:d.secure_url, type:resourceType};
+                showToast('Upload failed: '+(d.error?.message||'Unknown error'),'error'); return null;
             }
 
-            // ── SUBMIT REPORT ────────────────
+            // ----- SUBMIT -----
             async function submitReportToSupabase() {
-    // Spinner start
-    const submitBtn = document.getElementById('submitReportBtn');
-    const originalBtnHTML = submitBtn ? submitBtn.innerHTML : '';
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-    }
-
-    const titleInput = document.getElementById('reportTitle');
-    const descInput = document.getElementById('reportDescription');
-    const severityInput = document.getElementById('reportSeverity');
-    const anonymousCheck = document.getElementById('anonymousToggle');
-    if (titleInput) APP_STATE.reportForm.title = titleInput.value.trim();
-    if (descInput) APP_STATE.reportForm.description = descInput.value.trim();
-    if (severityInput) APP_STATE.reportForm.severity = severityInput.value;
-    if (anonymousCheck) APP_STATE.reportForm.anonymous = anonymousCheck.checked;
-
-    const form = APP_STATE.reportForm;
-    if (!form.category) { showToast('Please select a category.', 'error'); resetSubmitBtn(submitBtn, originalBtnHTML); goToStep(1); return; }
-    if (!form.lat || !form.lng) { showToast('Please set the location.', 'error'); resetSubmitBtn(submitBtn, originalBtnHTML); goToStep(2); return; }
-    if (!form.title) { showToast('Please enter a title.', 'error'); resetSubmitBtn(submitBtn, originalBtnHTML); return; }
-    if (!form.description) { showToast('Please enter a description.', 'error'); resetSubmitBtn(submitBtn, originalBtnHTML); return; }
-
-    APP_STATE.isLoading = true;
-    let imageUrl = null;
-    let videoUrl = null;
-    try {
-        if (form.images.length > 0) {
-            const file = form.images[0];
-            imageUrl = file instanceof File ? await uploadImage(file) : file;
-        }
-        if (form.videoFile) videoUrl = await uploadVideo(form.videoFile);
-
-        const reportData = {
-            title: form.title,
-            description: form.description,
-            category: form.category.name,
-            latitude: form.lat,
-            longitude: form.lng,
-            location_name: form.locationName || 'Unknown',
-            severity: form.severity,
-            anonymous: form.anonymous || !APP_STATE.isAuthenticated,
-            anonymous_name: form.anonymous ? 'Anonymous' : null,
-            image_url: imageUrl,
-            video_url: videoUrl,
-            user_id: APP_STATE.isAuthenticated ? APP_STATE.currentUser.id : null,
-            status: 'pending',
-            verified: false,
-            verification_count: 0,
-        };
-        const { data, error } = await supabaseClient.from('reports').insert([reportData]).select();
-        if (error) throw error;
-        if (data && data[0] && imageUrl) {
-            await supabaseClient.from('report_images').insert([{ report_id: data[0].id, image_url: imageUrl }]);
-        }
-
-        showToast('Report submitted successfully!', 'success');
-        document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
-        document.getElementById('formSuccess').classList.add('active');
-        APP_STATE.reportForm = {
-            step: 1, category: null, lat: null, lng: null, locationName: '',
-            images: [], videoFile: null, title: '', description: '',
-            severity: 'medium', anonymous: false
-        };
-        await fetchReports();
-        updateAuthUI();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-        showToast('Failed to submit report: ' + err.message, 'error');
-    } finally {
-        APP_STATE.isLoading = false;
-        resetSubmitBtn(submitBtn, originalBtnHTML);
-    }
-}
-
-// Helper function to reset the button (add this right after submitReportToSupabase)
-function resetSubmitBtn(btn, html) {
-    if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = html;
-    }
-}
-
-            // ── VERIFICATION / COMMENTS ───────
-            async function verifyReportFromDetail(reportId) {
-                if (!APP_STATE.isAuthenticated) { showToast('Please sign in to verify reports.', 'error'); return; }
+                const btn=document.getElementById('submitReportBtn'); const orig=btn?btn.innerHTML:'';
+                if(btn){btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting...';}
+                const title=document.getElementById('reportTitle')?.value.trim();
+                const desc=document.getElementById('reportDescription')?.value.trim();
+                const sev=document.getElementById('reportSeverity')?.value;
+                const anon=document.getElementById('anonymousToggle')?.checked;
+                if(title) APP_STATE.reportForm.title=title;
+                if(desc) APP_STATE.reportForm.description=desc;
+                if(sev) APP_STATE.reportForm.severity=sev;
+                if(anon!==undefined) APP_STATE.reportForm.anonymous=anon;
+                const f=APP_STATE.reportForm;
+                if(!f.category){showToast('Select a category.','error'); resetBtn(btn,orig); goToStep(1); return;}
+                if(!f.lat||!f.lng){showToast('Set location.','error'); resetBtn(btn,orig); goToStep(2); return;}
+                if(!f.title){showToast('Enter a title.','error'); resetBtn(btn,orig); return;}
+                if(!f.description){showToast('Enter a description.','error'); resetBtn(btn,orig); return;}
+                let imageUrl=null, videoUrl=null;
                 try {
-                    const { error: verr } = await supabaseClient.from('report_verifications').insert([{ report_id: reportId, user_id: APP_STATE.currentUser.id }]);
-                    if (verr && verr.code === '23505') { showToast('You already verified this report.', 'info'); return; }
-                    if (verr) throw verr;
-                    const { count } = await supabaseClient.from('report_verifications').select('*', { count:'exact', head:true }).eq('report_id', reportId);
-                    const vCount = count || 0;
-                    const updates = { verification_count: vCount };
-                    if (vCount >= 3) { updates.verified = true; updates.status = 'verified'; }
-                    await supabaseClient.from('reports').update(updates).eq('id', reportId);
-                    showToast('Report verified! Thank you.', 'success');
-                    closeFullscreenReport();
-                    await fetchReports();
-                } catch (err) {
-                    showToast('Verification failed: ' + err.message, 'error');
-                }
+                    if(f.mediaFile) { const r=await uploadToCloudinary(f.mediaFile); if(r) { if(r.type==='video') videoUrl=r.url; else imageUrl=r.url; } }
+                    const reportData={
+                        title:f.title, description:f.description, category:f.category.name,
+                        latitude:f.lat, longitude:f.lng, location_name:f.locationName||'Unknown', severity:f.severity,
+                        anonymous:f.anonymous||!APP_STATE.isAuthenticated, anonymous_name:f.anonymous?'Anonymous':null,
+                        image_url:imageUrl, video_url:videoUrl,
+                        user_id:APP_STATE.isAuthenticated?APP_STATE.currentUser.id:null,
+                        status:'pending', verified:false, verification_count:0
+                    };
+                    const {data,error}=await supabaseClient.from('reports').insert([reportData]).select();
+                    if(error) throw error;
+                    if(data&&data[0]&&imageUrl) await supabaseClient.from('report_images').insert([{report_id:data[0].id, image_url:imageUrl}]);
+                    showToast('Report submitted!','success');
+                    document.querySelectorAll('.form-step').forEach(s=>s.classList.remove('active'));
+                    document.getElementById('formSuccess').classList.add('active');
+                    APP_STATE.reportForm={step:1, category:null, lat:null, lng:null, locationName:'', mediaFile:null, title:'', description:'', severity:'medium', anonymous:false};
+                    await fetchReports(); updateAuthUI(); window.scrollTo({top:0,behavior:'smooth'});
+                } catch(err) { showToast('Failed: '+err.message,'error'); }
+                finally { resetBtn(btn,orig); }
             }
-            async function addCommentFromDetail(reportId) {
-                const input = document.getElementById('commentInput');
-                const content = input?.value.trim();
-                if (!content) return;
-                if (!APP_STATE.isAuthenticated) { showToast('Please sign in to comment.', 'error'); return; }
+            function resetBtn(btn,html) { if(btn){btn.disabled=false; btn.innerHTML=html;} }
+
+            // ----- VERIFICATION -----
+            async function verifyReport(reportId) {
+                if(!APP_STATE.isAuthenticated) { showToast('Sign in to verify.','error'); return; }
                 try {
-                    await supabaseClient.from('comments').insert([{ report_id: reportId, user_id: APP_STATE.currentUser.id, content }]);
-                    input.value = '';
-                    const report = await fetchReportById(reportId);
-                    if (report) renderFullscreenReport(report);
-                    showToast('Comment posted!', 'success');
-                } catch (err) {
-                    showToast('Failed to post comment: ' + err.message, 'error');
-                }
+                    const {error:verr}=await supabaseClient.from('report_verifications').insert([{report_id:reportId, user_id:APP_STATE.currentUser.id}]);
+                    if(verr&&verr.code==='23505') { showToast('Already verified.','info'); return; } else if(verr) throw verr;
+                    const {count}=await supabaseClient.from('report_verifications').select('*',{count:'exact',head:true}).eq('report_id',reportId);
+                    const vc=count||0; const updates={verification_count:vc};
+                    if(vc>=3) { updates.verified=true; updates.status='verified'; }
+                    await supabaseClient.from('reports').update(updates).eq('id',reportId);
+                    showToast('Verified!','success'); closeFullscreenReport(); await fetchReports();
+                } catch(err) { showToast('Verification failed: '+err.message,'error'); }
+            }
+            async function addComment(reportId) {
+                const input=document.getElementById('commentInput'); const content=input?.value.trim();
+                if(!content) return; if(!APP_STATE.isAuthenticated) { showToast('Sign in to comment.','error'); return; }
+                try {
+                    await supabaseClient.from('comments').insert([{report_id:reportId, user_id:APP_STATE.currentUser.id, content}]);
+                    input.value=''; const report=await fetchReportById(reportId); if(report) renderFullscreenReport(report);
+                    showToast('Comment posted.','success');
+                } catch(err) { showToast('Failed: '+err.message,'error'); }
             }
 
-            // ── NAVIGATION ───────────────────
+            // ----- NAVIGATION (with mobile fix) -----
             function navigateTo(page) {
                 APP_STATE.currentPage = page;
+                // Desktop nav
                 document.querySelectorAll('[data-nav]').forEach(el => el.classList.remove('active'));
                 document.querySelector(`[data-nav="${page}"]`)?.classList.add('active');
+                // Mobile nav
                 document.querySelectorAll('[data-mob-nav]').forEach(el => el.classList.remove('active'));
-                document.querySelector(`[data-mob-nav="${page}"]`)?.classList.add('active');
-                const appContent = document.getElementById('appContent');
-                switch (page) {
-                    case 'home': renderHomePage(appContent); break;
-                    case 'map': renderMapPage(appContent); break;
-                    case 'report': renderReportPage(appContent); break;
-                    case 'dashboard': renderDashboardPage(appContent); break;
-                    default: renderHomePage(appContent);
+                const mobLink = document.querySelector(`[data-mob-nav="${page}"]`);
+                if (mobLink) mobLink.classList.add('active');
+                else document.querySelector('[data-mob-nav="dashboard"]')?.classList.add('active'); // fallback for 'profile'
+
+                const app = document.getElementById('appContent');
+                switch(page) {
+                    case 'home': renderHomePage(app); break;
+                    case 'map': renderMapPage(app); break;
+                    case 'report': renderReportPage(app); break;
+                    case 'dashboard': renderDashboardPage(app); break;
+                    default: renderHomePage(app);
                 }
-                window.scrollTo({ top:0, behavior:'smooth' });
-                updateMobileNavVisibility();
+                window.scrollTo({top:0,behavior:'smooth'});
+                updateMobileNav();
             }
-            function updateMobileNavVisibility() {
-                const mobileNav = document.getElementById('mobileNav');
-                const fabBtn = document.getElementById('fabBtn');
-                if (window.innerWidth <= 768) {
-                    mobileNav.style.display = 'flex';
-                    fabBtn.style.display = 'flex';
-                } else {
-                    mobileNav.style.display = 'none';
-                    fabBtn.style.display = 'none';
-                }
+            function updateMobileNav() {
+                const nav=document.getElementById('mobileNav'), fab=document.getElementById('fabBtn');
+                if(window.innerWidth<=768) { nav.style.display='flex'; fab.style.display='flex'; }
+                else { nav.style.display='none'; fab.style.display='none'; }
             }
-            function getTimeAgo(timestamp) {
-                const diff = Date.now() - new Date(timestamp).getTime();
-                const mins = Math.floor(diff / 60000);
-                if (mins < 1) return 'Just now';
-                if (mins < 60) return `${mins}m ago`;
-                const hours = Math.floor(mins / 60);
-                if (hours < 24) return `${hours}h ago`;
-                return `${Math.floor(hours / 24)}d ago`;
+            function getTimeAgo(ts) {
+                const diff=Date.now()-new Date(ts).getTime(), mins=Math.floor(diff/60000);
+                if(mins<1) return 'Just now'; if(mins<60) return `${mins}m ago`;
+                const hrs=Math.floor(mins/60); if(hrs<24) return `${hrs}h ago`;
+                return `${Math.floor(hrs/24)}d ago`;
             }
 
-            // ── RENDER: HOME ──────────────────
-            function renderHomePage(container) {
-                const verifiedCount = APP_STATE.reports.filter(r => r.verified).length;
-                const totalReports = APP_STATE.reports.length;
-                const activeAreas = new Set(APP_STATE.reports.map(r => r.location_name?.split(',')[1]?.trim())).size;
-                container.innerHTML = `
-                <div class="container">
-                  <section class="hero">
-                    <div class="hero-content">
-                      <h1>Report incidents around you in <span class="highlight">real time.</span></h1>
-                      <p>Join citizens making their communities safer. Report incidents, verify reports, and stay informed with live maps and alerts.</p>
-                      <div class="hero-cta">
-                        <button class="btn btn-primary btn-lg" onclick="navigateTo('report')"><i class="fas fa-bullhorn"></i> Report Incident</button>
-                        <button class="btn btn-outline btn-lg" onclick="navigateTo('map')"><i class="fas fa-map-marked-alt"></i> Explore Map</button>
-                      </div>
-                    </div>
-                    <div class="hero-map" id="heroMap"></div>
-                  </section>
-                  <div class="stats-bar">
-                    <div class="stat-card"><div class="stat-value" style="color:var(--accent);">${totalReports.toLocaleString()}</div><div class="stat-label">Total Reports</div></div>
-                    <div class="stat-card"><div class="stat-value" style="color:var(--success);">${verifiedCount.toLocaleString()}</div><div class="stat-label">Verified Incidents</div></div>
-                    <div class="stat-card"><div class="stat-value" style="color:var(--warning);">${activeAreas}</div><div class="stat-label">Active Areas</div></div>
-                    <div class="stat-card"><div class="stat-value" style="color:var(--info);">98%</div><div class="stat-label">Response Rate</div></div>
-                  </div>
-                  <div class="section-header"><h2><i class="fas fa-satellite-dish"></i> Live Incident Feed</h2><button class="btn btn-outline btn-sm" onclick="navigateTo('map')">View All</button></div>
-                  <div class="incident-grid" id="homeFeedGrid"></div>
-                  <div class="section-header" style="margin-top:40px;"><h2><i class="fas fa-layer-group"></i> Report Categories</h2></div>
-                  <div class="category-grid" id="homeCategoryGrid"></div>
-                </div>`;
-                const feedGrid = document.getElementById('homeFeedGrid');
-                if (APP_STATE.reports.length === 0) {
-                    feedGrid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-inbox fa-2x"></i><p>No reports yet. Be the first to report!</p></div>';
-                } else {
-                    APP_STATE.reports.slice(0, 6).forEach(r => feedGrid.appendChild(createIncidentCard(r)));
-                }
-                const catGrid = document.getElementById('homeCategoryGrid');
-                APP_STATE.categories.forEach(cat => {
-                    const btn = document.createElement('button');
-                    btn.className = 'category-btn';
-                    btn.innerHTML = `<span class="cat-icon"><i class="fas ${cat.icon}"></i></span>${cat.name}`;
-                    btn.onclick = () => { APP_STATE.reportForm.category = cat; navigateTo('report'); };
-                    catGrid.appendChild(btn);
+            // ----- LOCATION (GPS + IP) -----
+            async function getUserLocation() {
+                return new Promise(resolve => {
+                    if(navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            pos=>{ APP_STATE.userLocation={lat:pos.coords.latitude, lng:pos.coords.longitude}; resolve(APP_STATE.userLocation); },
+                            async ()=>{ const ip=await ipLocation(); resolve(ip); },
+                            {enableHighAccuracy:true, timeout:5000, maximumAge:0}
+                        );
+                    } else { ipLocation().then(resolve); }
                 });
-                setTimeout(() => initHeroMap(), 300);
+            }
+            async function ipLocation() {
+                try {
+                    const res=await fetch('https://ipapi.co/json/'); const d=await res.json();
+                    if(d.latitude) APP_STATE.userLocation={lat:d.latitude, lng:d.longitude};
+                    else APP_STATE.userLocation={lat:6.5244, lng:3.3792};
+                } catch(e) { APP_STATE.userLocation={lat:6.5244, lng:3.3792}; }
+                return APP_STATE.userLocation;
+            }
+
+            // ----- MAP (MapLibre + OpenFreeMap) -----
+            function createMap(containerId, center, interactive=true) {
+                const map = new maplibregl.Map({
+                    container: containerId,
+                    style: 'https://tiles.openfreemap.org/styles/liberty',
+                    center: [center.lng, center.lat],
+                    zoom: 13,
+                    interactive: interactive
+                });
+                map.addControl(new maplibregl.NavigationControl(), 'top-right');
+                return map;
+            }
+            function addMarkerToMap(map, report) {
+                const catData = APP_STATE.categories.find(c=>c.name===report.category);
+                const el = document.createElement('div');
+                el.style.backgroundColor = catData?.color||'#EF4444';
+                el.style.width = '12px'; el.style.height = '12px'; el.style.borderRadius = '50%';
+                el.style.border = '2px solid white';
+                new maplibregl.Marker(el).setLngLat([report.longitude, report.latitude]).setPopup(
+                    new maplibregl.Popup({offset:25}).setHTML(`
+                        <div style="font-family:Inter,sans-serif;max-width:220px;color:#000;">
+                            ${report.image_url?`<img src="${report.image_url}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px;" onerror="this.style.display='none'">`:''}
+                            <b>${report.title}</b><br><small>${report.location_name}</small>
+                            <br><button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="openFullscreenReport(${report.id})">View Details</button>
+                        </div>
+                    `)
+                ).addTo(map);
+            }
+
+            // ----- RENDER HOME -----
+            function renderHomePage(container) {
+                const vc=APP_STATE.reports.filter(r=>r.verified).length;
+                const total=APP_STATE.reports.length;
+                container.innerHTML=`
+                <div class="container">
+                    <section class="hero">
+                        <div class="hero-content">
+                            <h1>Report incidents around you in <span class="highlight">real time.</span></h1>
+                            <p>Join citizens making their communities safer.</p>
+                            <div class="hero-cta">
+                                <button class="btn btn-primary btn-lg" onclick="navigateTo('report')"><i class="fas fa-bullhorn"></i> Report Incident</button>
+                                <button class="btn btn-outline btn-lg" onclick="navigateTo('map')"><i class="fas fa-map-marked-alt"></i> Explore Map</button>
+                            </div>
+                        </div>
+                        <div class="hero-map"><div id="heroMapContainer" class="map-container"></div></div>
+                    </section>
+                    <div class="stats-bar">
+                        <div class="stat-card"><div class="stat-value" style="color:var(--accent);">${total}</div><div class="stat-label">Total Reports</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--success);">${vc}</div><div class="stat-label">Verified</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--warning);">--</div><div class="stat-label">Active Areas</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--info);">98%</div><div class="stat-label">Response Rate</div></div>
+                    </div>
+                    <div class="section-header"><h2><i class="fas fa-satellite-dish"></i> Live Feed</h2><button class="btn btn-outline btn-sm" onclick="navigateTo('map')">View All</button></div>
+                    <div class="incident-grid" id="homeFeedGrid"></div>
+                </div>`;
+                const feed=document.getElementById('homeFeedGrid');
+                if(APP_STATE.reports.length===0) feed.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-inbox fa-2x"></i><p>No reports yet.</p></div>';
+                else APP_STATE.reports.slice(0,6).forEach(r=>feed.appendChild(createIncidentCard(r)));
+                getUserLocation().then(loc=>{
+                    if(APP_STATE.maps.hero) APP_STATE.maps.hero.remove();
+                    APP_STATE.maps.hero = createMap('heroMapContainer', loc, false);
+                    APP_STATE.reports.forEach(r=>{ if(r.latitude&&r.longitude) addMarkerToMap(APP_STATE.maps.hero, r); });
+                });
             }
             function createIncidentCard(report) {
-                const card = document.createElement('div');
-                card.className = 'incident-card';
-                card.onclick = () => openFullscreenReport(report);
-                const timeAgo = getTimeAgo(report.created_at);
-                const severityBadge = (report.severity === 'high' || report.severity === 'critical') ? 'badge-danger' : report.severity === 'medium' ? 'badge-warning' : 'badge-info';
-                const catData = APP_STATE.categories.find(c => c.name === report.category);
-                const thumbnail = report.image_url
-                    ? `<img class="card-img" src="${report.image_url}" alt="${report.title}" onerror="this.parentElement.innerHTML='<div class=\'card-video-thumb\'><i class=\'fas fa-video\'></i></div>'">`
-                    : (report.video_url ? `<div class="card-video-thumb"><i class="fas fa-video"></i></div>` : `<div class="card-video-thumb"><i class="fas fa-image"></i></div>`);
-                card.innerHTML = `
-                ${thumbnail}
+                const card=document.createElement('div'); card.className='incident-card'; card.onclick=()=>openFullscreenReport(report);
+                const timeAgo=getTimeAgo(report.created_at);
+                const sevBadge=(report.severity==='high'||report.severity==='critical')?'badge-danger':report.severity==='medium'?'badge-warning':'badge-info';
+                const cat=APP_STATE.categories.find(c=>c.name===report.category);
+                const thumb=report.image_url?`<img class="card-img" src="${report.image_url}" alt="${report.title}">`:
+                    (report.video_url?`<div class="card-video-thumb"><i class="fas fa-video"></i></div>`:`<div class="card-video-thumb"><i class="fas fa-image"></i></div>`);
+                card.innerHTML=`
+                ${thumb}
                 <div class="card-body">
-                  <div class="card-category" style="color:${catData?.color || '#fff'};"><i class="fas ${catData?.icon || 'fa-circle-question'}"></i> ${report.category}</div>
-                  <div class="card-title">${report.title}</div>
-                  <div class="card-meta">
-                    <span><i class="fas fa-map-marker-alt"></i> ${report.location_name?.split(',')[0] || 'Unknown'}</span>
-                    <span><i class="far fa-clock"></i> ${timeAgo}</span>
-                    ${report.verified ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified</span>' : '<span class="badge badge-warning">Pending</span>'}
-                    <span class="badge ${severityBadge}">${report.severity?.toUpperCase()}</span>
-                  </div>
+                    <div class="card-category" style="color:${cat?.color||'#fff'};"><i class="fas ${cat?.icon||'fa-circle-question'}"></i> ${report.category}</div>
+                    <div class="card-title">${report.title}</div>
+                    <div class="card-meta">
+                        <span><i class="fas fa-map-marker-alt"></i> ${report.location_name?.split(',')[0]||'Unknown'}</span>
+                        <span><i class="far fa-clock"></i> ${timeAgo}</span>
+                        ${report.verified?'<span class="badge badge-success">Verified</span>':'<span class="badge badge-warning">Pending</span>'}
+                        <span class="badge ${sevBadge}">${report.severity?.toUpperCase()}</span>
+                    </div>
                 </div>`;
                 return card;
             }
-            function initHeroMap() {
-                const mapEl = document.getElementById('heroMap');
-                if (!mapEl) return;
-                if (APP_STATE.mapInstance) APP_STATE.mapInstance.remove();
-                const map = L.map('heroMap', { zoomControl: false, attributionControl: false }).setView([6.52, 3.38], 12);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-                APP_STATE.reports.forEach(r => {
-                    if (r.latitude && r.longitude) {
-                        const catData = APP_STATE.categories.find(c => c.name === r.category);
-                        L.circleMarker([r.latitude, r.longitude], { radius: 8, fillColor: catData?.color || '#EF4444', color: '#fff', weight: 2, fillOpacity: 0.85 }).addTo(map).bindPopup(`<b>${r.title}</b><br><small>${r.location_name}</small>`);
-                    }
-                });
-                APP_STATE.mapInstance = map;
-                setTimeout(() => map.invalidateSize(), 150);
-            }
 
-            // ── RENDER: MAP ───────────────────
-            function renderMapPage(container) {
-                container.innerHTML = `
-                <div class="map-page-container">
-                  <div class="map-sidebar" id="mapSidebar">
-                    <input type="text" class="input-field" placeholder="🔍 Search area or incident..." id="mapSearch" oninput="applyMapFilters()">
-                    <div class="map-filters" id="mapFilters"></div>
-                    <label style="font-size:0.8rem;color:var(--text-muted);"><input type="checkbox" id="filterVerifiedOnly" onchange="applyMapFilters()"> Verified only</label>
-                    <div id="mapSidebarList" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;overflow-y:auto;flex:1;"></div>
-                  </div>
-                  <div class="map-main" id="fullMapContainer"></div>
-                </div>`;
-                const filterContainer = document.getElementById('mapFilters');
-                const allChip = document.createElement('span');
-                allChip.className = 'map-filter-chip active';
-                allChip.textContent = 'All';
-                allChip.onclick = () => applyMapFilters('all');
-                filterContainer.appendChild(allChip);
-                APP_STATE.categories.forEach(cat => {
-                    const chip = document.createElement('span');
-                    chip.className = 'map-filter-chip';
-                    chip.innerHTML = `<i class="fas ${cat.icon}"></i> ${cat.name}`;
-                    chip.dataset.category = cat.name;
-                    chip.onclick = () => applyMapFilters(cat.name);
-                    filterContainer.appendChild(chip);
-                });
-                updateMapSidebarList();
-                setTimeout(() => initFullMap(), 300);
-            }
-            function updateMapSidebarList(filterCategory = 'all', searchTerm = '') {
-                const listEl = document.getElementById('mapSidebarList');
-                if (!listEl) return;
-                let filtered = APP_STATE.reports;
-                const verifiedOnly = document.getElementById('filterVerifiedOnly')?.checked;
-                if (verifiedOnly) filtered = filtered.filter(r => r.verified);
-                if (filterCategory !== 'all') filtered = filtered.filter(r => r.category === filterCategory);
-                if (searchTerm) {
-                    const term = searchTerm.toLowerCase();
-                    filtered = filtered.filter(r => r.title.toLowerCase().includes(term) || (r.location_name || '').toLowerCase().includes(term));
-                }
-                listEl.innerHTML = filtered.length === 0
-                    ? '<p style="color:var(--text-muted);text-align:center;padding:20px;">No reports found.</p>'
-                    : filtered.map(r => {
-                        const catData = APP_STATE.categories.find(c => c.name === r.category);
-                        return `
-                        <div class="card" style="padding:12px;cursor:pointer;" onclick="openFullscreenReport(${r.id})">
-                          <div style="display:flex;gap:10px;align-items:center;">
-                            <span style="font-size:1.5rem;color:${catData?.color}"><i class="fas ${catData?.icon}"></i></span>
-                            <div style="flex:1;"><div style="font-weight:600;font-size:0.85rem;">${r.title}</div><div style="font-size:0.75rem;color:var(--text-muted);">${r.location_name} · ${getTimeAgo(r.created_at)}</div></div>
-                            ${r.verified?'<span class="badge badge-success">✓</span>':'<span class="badge badge-warning">⏳</span>'}
-                          </div></div>`;
-                    }).join('');
-            }
-            function applyMapFilters(category = 'all') {
-                document.querySelectorAll('#mapFilters .map-filter-chip').forEach(chip => {
-                    chip.classList.remove('active');
-                    if (chip.dataset.category === category || (category === 'all' && chip.textContent === 'All')) chip.classList.add('active');
-                });
-                updateMapSidebarList(category, document.getElementById('mapSearch')?.value || '');
-                updateFullMapMarkers(category);
-            }
-            function initFullMap() {
-                const mapEl = document.getElementById('fullMapContainer');
-                if (!mapEl) return;
-                if (APP_STATE.mapInstance) APP_STATE.mapInstance.remove();
-                const map = L.map('fullMapContainer', { zoomControl: true }).setView([6.52, 3.38], 13);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-                APP_STATE.mapInstance = map;
-                APP_STATE.mapMarkers = [];
-                APP_STATE.reports.forEach(r => { if (r.latitude && r.longitude) addMapMarker(map, r); });
-                setTimeout(() => map.invalidateSize(), 200);
-            }
-            function addMapMarker(map, report) {
-                const catData = APP_STATE.categories.find(c => c.name === report.category);
-                const marker = L.circleMarker([report.latitude, report.longitude], {
-                    radius: (report.severity === 'high' || report.severity === 'critical') ? 10 : 7,
-                    fillColor: catData?.color || '#EF4444', color: '#fff', weight: 2, fillOpacity: 0.85,
-                }).addTo(map);
-                marker.bindPopup(`
-                <div style="font-family:Inter,sans-serif;max-width:220px;">
-                  ${report.image_url?`<img src="${report.image_url}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px;" onerror="this.style.display='none'">`:''}
-                  <b>${report.title}</b><p style="margin:4px 0;font-size:0.75rem;">${report.location_name}</p>
-                  <button class="btn btn-primary btn-sm" onclick="openFullscreenReport(${report.id})">View Details</button>
-                </div>`);
-                marker.reportData = report;
-                APP_STATE.mapMarkers.push(marker);
-            }
-            function updateFullMapMarkers(category) {
-                if (!APP_STATE.mapInstance) return;
-                APP_STATE.mapMarkers.forEach(m => APP_STATE.mapInstance.removeLayer(m));
-                APP_STATE.mapMarkers = [];
-                const verifiedOnly = document.getElementById('filterVerifiedOnly')?.checked;
-                let filtered = APP_STATE.reports;
-                if (verifiedOnly) filtered = filtered.filter(r => r.verified);
-                if (category !== 'all') filtered = filtered.filter(r => r.category === category);
-                filtered.forEach(r => { if (r.latitude && r.longitude) addMapMarker(APP_STATE.mapInstance, r); });
-            }
-
-            // ── RENDER: REPORT FORM ──────────
-            function renderReportPage(container) {
-                const form = APP_STATE.reportForm;
-                container.innerHTML = `
-                <div class="report-form-container">
-                  <h2><i class="fas fa-pen-to-square"></i> Report an Incident</h2>
-                  <p style="color:var(--text-muted);margin-bottom:24px;">Your report helps keep the community safe and informed.</p>
-                  <div class="step-indicator">
-                    <div class="step-dot active" id="stepDot1">1</div><div class="step-line" id="stepLine1"></div>
-                    <div class="step-dot" id="stepDot2">2</div><div class="step-line" id="stepLine2"></div>
-                    <div class="step-dot" id="stepDot3">3</div><div class="step-line" id="stepLine3"></div>
-                    <div class="step-dot" id="stepDot4">4</div>
-                  </div>
-                  <div class="form-step active" id="formStep1">
-                    <h3>Select Category</h3><p style="color:var(--text-muted);">What type of incident?</p>
-                    <div class="category-grid" id="reportCategoryGrid"></div>
-                    <div style="margin-top:20px;text-align:right;"><button class="btn btn-primary" id="step1Next" disabled onclick="goToStep(2)">Next →</button></div>
-                  </div>
-                  <div class="form-step" id="formStep2">
-                    <h3><i class="fas fa-map-pin"></i> Pinpoint Location</h3>
-                    <div id="reportLocationMap" style="height:300px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px;"></div>
-                    <input type="text" class="input-field" placeholder="Location name" id="locationNameInput" value="${form.locationName}">
-                    <p style="font-size:0.75rem;color:var(--text-muted);">Coordinates: <span id="coordDisplay">${form.lat?form.lat.toFixed(4)+', '+form.lng.toFixed(4):'Detecting...'}</span></p>
-                    <div style="margin-top:16px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(1)">← Back</button><button class="btn btn-primary" onclick="goToStep(3)">Next →</button></div>
-                  </div>
-                  <div class="form-step" id="formStep3">
-                    <h3><i class="fas fa-camera"></i> Upload Evidence</h3>
-                    <div class="upload-zone" onclick="document.getElementById('fileInput').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload images</p></div>
-                    <input type="file" id="fileInput" accept="image/*" multiple style="display:none;" onchange="handleFileUpload(event)">
-                    <div class="upload-zone" style="margin-top:8px;" onclick="document.getElementById('videoInputEl').click()"><i class="fas fa-video"></i><p>Click to upload video</p></div>
-                    <input type="file" id="videoInputEl" accept="video/*" style="display:none;" onchange="handleVideoUpload(event)">
-                    <div class="upload-preview" id="uploadPreview"></div>
-                    <div style="margin-top:16px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(2)">← Back</button><button class="btn btn-primary" onclick="goToStep(4)">Next →</button></div>
-                  </div>
-                  <div class="form-step" id="formStep4">
-                    <h3><i class="fas fa-align-left"></i> Details</h3>
-                    <input type="text" class="input-field" placeholder="Title" id="reportTitle" value="${form.title}">
-                    <textarea class="input-field" placeholder="Describe what happened..." id="reportDescription">${form.description}</textarea>
-                    <select class="input-field" id="reportSeverity"><option value="low" ${form.severity==='low'?'selected':''}>Low</option><option value="medium" ${form.severity==='medium'?'selected':''}>Medium</option><option value="high" ${form.severity==='high'?'selected':''}>High</option><option value="critical" ${form.severity==='critical'?'selected':''}>Critical</option></select>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px;"><input type="checkbox" id="anonymousToggle" ${form.anonymous?'checked':''} onchange="APP_STATE.reportForm.anonymous=this.checked"> Report anonymously</label>
-                    <div style="margin-top:20px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(3)">← Back</button><button class="btn btn-success btn-lg" id="submitReportBtn" onclick="submitReportToSupabase()"><i class="fas fa-paper-plane"></i> Submit Report</button></div>
-                  </div>
-                  <div class="form-step" id="formSuccess" style="text-align:center;padding:40px;">
-                    <i class="fas fa-check-circle" style="font-size:4rem;color:var(--success);"></i>
-                    <h2>Report Submitted!</h2><p style="color:var(--text-muted);">Thank you for helping keep your community safe.</p>
-                    <button class="btn btn-primary btn-lg" onclick="navigateTo('map')">View on Map</button>
-                    <button class="btn btn-outline btn-lg" onclick="navigateTo('home')">Back to Home</button>
-                  </div>
-                </div>`;
-                const catGrid = document.getElementById('reportCategoryGrid');
-                APP_STATE.categories.forEach(cat => {
-                    const btn = document.createElement('button');
-                    btn.className = 'category-btn';
-                    btn.innerHTML = `<span class="cat-icon"><i class="fas ${cat.icon}"></i></span>${cat.name}`;
-                    btn.onclick = () => { document.querySelectorAll('#reportCategoryGrid .category-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); APP_STATE.reportForm.category = cat; document.getElementById('step1Next').disabled = false; };
-                    if (form.category?.id === cat.id) { btn.classList.add('selected'); document.getElementById('step1Next').disabled = false; }
-                    catGrid.appendChild(btn);
-                });
-                if (form.step > 1) goToStep(form.step, true);
-                setTimeout(() => { if (form.step === 2) initReportLocationMap(); }, 300);
-            }
-            function goToStep(step, silent = false) {
-                APP_STATE.reportForm.step = step;
-                document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
-                document.getElementById('formStep' + step)?.classList.add('active');
-                for (let i=1; i<=4; i++) {
-                    const dot = document.getElementById('stepDot'+i);
-                    const line = document.getElementById('stepLine'+i);
-                    if (dot) { dot.classList.remove('active','done'); if (i<step) dot.classList.add('done'); if (i===step) dot.classList.add('active'); }
-                    if (line) { line.classList.remove('done'); if (i<step) line.classList.add('done'); }
-                }
-                if (step === 2 && !silent) initReportLocationMap();
-                window.scrollTo({ top:200, behavior:'smooth' });
-            }
-            function initReportLocationMap() {
-                const mapEl = document.getElementById('reportLocationMap');
-                if (!mapEl) return;
-                if (mapEl._leaflet_map) mapEl._leaflet_map.remove();
-                const defaultLat = APP_STATE.reportForm.lat || 6.5244;
-                const defaultLng = APP_STATE.reportForm.lng || 3.3792;
-                const map = L.map('reportLocationMap', { zoomControl: true }).setView([defaultLat, defaultLng], 14);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
-                const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map).bindPopup('Drag me').openPopup();
-                marker.on('dragend', () => {
-                    const pos = marker.getLatLng();
-                    APP_STATE.reportForm.lat = pos.lat;
-                    APP_STATE.reportForm.lng = pos.lng;
-                    document.getElementById('coordDisplay').textContent = pos.lat.toFixed(4)+', '+pos.lng.toFixed(4);
-                    reverseGeocode(pos.lat, pos.lng);
-                });
-                mapEl._leaflet_map = map;
-                setTimeout(() => map.invalidateSize(), 150);
-                if (navigator.geolocation && !APP_STATE.reportForm.lat) {
-                    navigator.geolocation.getCurrentPosition(pos => {
-                        map.setView([pos.coords.latitude, pos.coords.longitude], 15);
-                        marker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
-                        APP_STATE.reportForm.lat = pos.coords.latitude;
-                        APP_STATE.reportForm.lng = pos.coords.longitude;
-                        document.getElementById('coordDisplay').textContent = pos.coords.latitude.toFixed(4)+', '+pos.coords.longitude.toFixed(4);
-                        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-                    }, ()=>{});
-                }
-            }
-            async function reverseGeocode(lat, lng) {
-                try {
-                    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`);
-                    const data = await resp.json();
-                    const name = data.display_name?.split(',')[0] || 'Unknown';
-                    APP_STATE.reportForm.locationName = name;
-                    document.getElementById('locationNameInput').value = name;
-                } catch(e) {}
-            }
-            function handleFileUpload(event) {
-                const files = event.target.files;
-                APP_STATE.reportForm.images = [];
-                const preview = document.getElementById('uploadPreview');
-                preview.innerHTML = '';
-                for (const file of files) {
-                    APP_STATE.reportForm.images.push(file);
-                    const reader = new FileReader();
-                    reader.onload = e => { const img = document.createElement('img'); img.src = e.target.result; preview.appendChild(img); };
-                    reader.readAsDataURL(file);
-                }
-            }
-            function handleVideoUpload(event) {
-                const file = event.target.files[0];
-                if (file) APP_STATE.reportForm.videoFile = file;
-            }
-
-            // ── RENDER: DASHBOARD ─────────────
-            function renderDashboardPage(container) {
-                if (!APP_STATE.isAuthenticated) {
-                    container.innerHTML = `<div class="container" style="text-align:center;padding:60px;"><i class="fas fa-lock" style="font-size:4rem;color:var(--text-muted);"></i><h2>Please Sign In</h2><button class="btn btn-primary btn-lg" onclick="toggleAuthModal()">Sign In / Sign Up</button></div>`;
-                    return;
-                }
-                const userReports = APP_STATE.reports.filter(r => r.user_id === APP_STATE.currentUser?.id);
-                const verifiedCount = userReports.filter(r => r.verified).length;
-                const profile = APP_STATE.currentProfile || {};
-                container.innerHTML = `
-                <div class="dashboard-layout">
-                  <div class="dashboard-sidebar">
-                    <a href="#" class="active" data-dash-tab="overview" onclick="switchDashTab('overview')"><i class="fas fa-th-large"></i> Overview</a>
-                    <a href="#" data-dash-tab="myreports" onclick="switchDashTab('myreports')"><i class="fas fa-file-alt"></i> My Reports</a>
-                    <a href="#" data-dash-tab="profile" onclick="switchDashTab('profile')"><i class="fas fa-user"></i> Profile</a>
-                    <a href="#" onclick="logout()" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                  </div>
-                  <div class="dashboard-main" id="dashMainContent"></div>
-                </div>`;
-                switchDashTab('overview');
-            }
-            function switchDashTab(tab) {
-                document.querySelectorAll('[data-dash-tab]').forEach(a => a.classList.remove('active'));
-                document.querySelector(`[data-dash-tab="${tab}"]`)?.classList.add('active');
-                const main = document.getElementById('dashMainContent');
-                const userReports = APP_STATE.reports.filter(r => r.user_id === APP_STATE.currentUser?.id);
-                const verifiedCount = userReports.filter(r => r.verified).length;
-                const profile = APP_STATE.currentProfile || {};
-                if (!main) return;
-                switch(tab) {
-                    case 'overview':
-                        main.innerHTML = `
-                        <h2>Dashboard Overview</h2>
-                        <div class="dashboard-grid">
-                          <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(99,102,241,0.2);color:var(--accent);"><i class="fas fa-file-alt"></i></div><div class="stat-num">${userReports.length}</div><div class="stat-desc">Reports Submitted</div></div>
-                          <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(16,185,129,0.2);color:var(--success);"><i class="fas fa-check-circle"></i></div><div class="stat-num">${verifiedCount}</div><div class="stat-desc">Verified</div></div>
-                          <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(245,158,11,0.2);color:var(--warning);"><i class="fas fa-star"></i></div><div class="stat-num">${profile.reputation||0}</div><div class="stat-desc">Reputation</div></div>
-                        </div>
-                        <h3>Recent Activity</h3>
-                        <div style="display:flex;flex-direction:column;gap:8px;">
-                          ${userReports.slice(0,5).map(r=>`<div class="card" style="padding:14px;cursor:pointer;" onclick="openFullscreenReport(${r.id})"><div style="display:flex;justify-content:space-between;"><div><strong>${r.title}</strong><div style="font-size:0.75rem;color:var(--text-muted);">${getTimeAgo(r.created_at)} · ${r.location_name}</div></div><span class="badge ${r.status==='verified'?'badge-success':'badge-warning'}">${r.status}</span></div></div>`).join('')}
-                        </div>`;
-                        break;
-                    case 'myreports':
-                        main.innerHTML = `<h2>My Reports</h2><div style="display:flex;flex-direction:column;gap:10px;">${userReports.map(r=>`<div class="card" style="padding:16px;cursor:pointer;" onclick="openFullscreenReport(${r.id})"><div style="display:flex;gap:12px;">${r.image_url?`<img src="${r.image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">`:''}<div style="flex:1;"><strong>${r.title}</strong><p style="font-size:0.8rem;color:var(--text-muted);">${r.location_name} · ${getTimeAgo(r.created_at)}</p><span class="badge ${r.status==='verified'?'badge-success':'badge-warning'}">${r.status}</span></div></div></div>`).join('')}</div>`;
-                        break;
-                    case 'profile':
-                        main.innerHTML = `<h2>Profile</h2><div class="card" style="max-width:500px;text-align:center;padding:24px;"><div class="avatar-sm" style="width:80px;height:80px;font-size:2rem;margin:0 auto;">${(profile.full_name||'U').charAt(0)}</div><h3>${profile.full_name||'User'}</h3><p style="color:var(--text-muted);">${APP_STATE.currentUser?.email}</p><p>Reputation: ${profile.reputation||0}</p><button class="btn btn-outline btn-sm" onclick="logout()">Logout</button></div>`;
-                        break;
-                }
-            }
-
-            // ── FULLSCREEN REPORT + LIGHTBOX ──
+            // ----- FULLSCREEN REPORT -----
             function openFullscreenReport(reportOrId) {
-                document.getElementById('reportFullscreen').style.display = 'flex';
-                if (typeof reportOrId === 'object') renderFullscreenReport(reportOrId);
+                document.getElementById('reportFullscreen').style.display='flex';
+                if(typeof reportOrId==='object') renderFullscreenReport(reportOrId);
                 else fetchReportById(reportOrId).then(renderFullscreenReport);
             }
             async function renderFullscreenReport(report) {
-                if (!report) return;
-                const catData = APP_STATE.categories.find(c => c.name === report.category);
-                const comments = await fetchComments(report.id);
-                const body = document.getElementById('reportFullscreenBody');
-                body.innerHTML = `
+                if(!report) return;
+                const cat=APP_STATE.categories.find(c=>c.name===report.category);
+                const comments=await fetchComments(report.id);
+                const body=document.getElementById('reportFullscreenBody');
+                body.innerHTML=`
                 <div>
-                  <h2>${report.title}</h2>
-                  <span class="badge ${report.severity==='high'||report.severity==='critical'?'badge-danger':'badge-warning'}">${report.severity}</span>
-                  ${report.verified?'<span class="badge badge-success">Verified</span>':''}
+                    <h2>${report.title}</h2>
+                    <span class="badge ${report.severity==='high'||report.severity==='critical'?'badge-danger':'badge-warning'}">${report.severity}</span>
+                    ${report.verified?'<span class="badge badge-success">Verified</span>':''}
                 </div>
-                ${report.image_url ? `<img src="${report.image_url}" style="width:100%; max-height:60vh; object-fit:contain; border-radius:var(--radius); margin:12px 0; cursor:pointer;" onclick="event.stopPropagation(); openImageLightbox('${report.image_url}')" onerror="this.style.display='none'">` : ''}
-                ${report.video_url ? `<video src="${report.video_url}" controls style="width:100%; max-height:60vh; border-radius:var(--radius); margin:12px 0;"></video>` : ''}
+                ${report.image_url?`<img src="${report.image_url}" style="width:100%;max-height:60vh;object-fit:contain;border-radius:var(--radius);margin:12px 0;cursor:pointer;" onclick="event.stopPropagation();openImageLightbox('${report.image_url}')">`:''}
+                ${report.video_url?`<video src="${report.video_url}" controls style="width:100%;max-height:60vh;border-radius:var(--radius);margin:12px 0;"></video>`:''}
                 <p>${report.description}</p>
                 <p style="font-size:0.85rem;color:var(--text-muted);"><i class="fas fa-map-marker-alt"></i> ${report.location_name} · ${getTimeAgo(report.created_at)} · by ${report.userName||'Anonymous'}</p>
                 <div style="display:flex;gap:10px;margin:12px 0;">
-                  ${APP_STATE.isAuthenticated?`<button class="btn btn-success btn-sm" onclick="verifyReportFromDetail(${report.id})" ${report.verified?'disabled':''}><i class="fas fa-check"></i> Verify</button>`:''}
-                  <span class="badge badge-info">${report.verification_count} verifications</span>
+                    ${APP_STATE.isAuthenticated?`<button class="btn btn-success btn-sm" onclick="verifyReport(${report.id})" ${report.verified?'disabled':''}><i class="fas fa-check"></i> Verify</button>`:''}
+                    <span class="badge badge-info">${report.verification_count} verifications</span>
                 </div>
                 <hr style="border-color:var(--border);">
                 <h4>Comments</h4>
                 <div style="max-height:300px;overflow-y:auto;margin-bottom:12px;">
-                  ${comments.map(c=>`<div class="card" style="padding:10px;margin:6px 0;"><strong>${c.profiles?.username||`User‑${c.user_id?.substring(0,8)}`}</strong>: ${c.content}<br><small style="color:var(--text-muted);">${getTimeAgo(c.created_at)}</small></div>`).join('')}
+                    ${comments.map(c=>`<div class="card" style="padding:10px;margin:6px 0;"><strong>${c.profiles?.username||`User‑${c.user_id?.substring(0,8)}`}</strong>: ${c.content}<br><small style="color:var(--text-muted);">${getTimeAgo(c.created_at)}</small></div>`).join('')}
                 </div>
-                ${APP_STATE.isAuthenticated?`<div style="display:flex;gap:8px;"><input type="text" class="input-field" placeholder="Add a comment..." id="commentInput"><button class="btn btn-primary btn-sm" onclick="addCommentFromDetail(${report.id})">Post</button></div>`:''}
+                ${APP_STATE.isAuthenticated?`<div style="display:flex;gap:8px;"><input type="text" class="input-field" placeholder="Add a comment..." id="commentInput"><button class="btn btn-primary btn-sm" onclick="addComment(${report.id})">Post</button></div>`:''}
               `;
             }
-            function closeFullscreenReport() {
-                document.getElementById('reportFullscreen').style.display = 'none';
+            function closeFullscreenReport() { document.getElementById('reportFullscreen').style.display='none'; }
+            function openImageLightbox(url) { document.getElementById('lightboxImage').src=url; document.getElementById('imageLightbox').style.display='flex'; }
+            function closeImageLightbox() { document.getElementById('imageLightbox').style.display='none'; }
+
+            // ----- MAP PAGE -----
+            function renderMapPage(container) {
+                container.innerHTML=`
+                <div class="map-page-container">
+                    <div class="map-sidebar">
+                        <input type="text" class="input-field" placeholder="Search area..." id="mapSearch" oninput="applyMapFilters()">
+                        <div class="map-filters" id="mapFilters"></div>
+                        <label style="font-size:0.8rem;color:var(--text-muted);"><input type="checkbox" id="filterVerifiedOnly" onchange="applyMapFilters()"> Verified only</label>
+                        <div id="mapSidebarList" style="flex:1;overflow-y:auto;"></div>
+                    </div>
+                    <div class="map-main"><div id="fullMapContainer" class="map-container"></div></div>
+                </div>`;
+                const filterContainer=document.getElementById('mapFilters');
+                const allChip=document.createElement('span'); allChip.className='map-filter-chip active'; allChip.textContent='All'; allChip.onclick=()=>applyMapFilters('all');
+                filterContainer.appendChild(allChip);
+                APP_STATE.categories.forEach(cat=>{
+                    const chip=document.createElement('span'); chip.className='map-filter-chip';
+                    chip.innerHTML=`<i class="fas ${cat.icon}"></i> ${cat.name}`; chip.dataset.category=cat.name;
+                    chip.onclick=()=>applyMapFilters(cat.name); filterContainer.appendChild(chip);
+                });
+                updateMapSidebarList();
+                getUserLocation().then(loc=>{
+                    if(APP_STATE.maps.full) APP_STATE.maps.full.remove();
+                    APP_STATE.maps.full = createMap('fullMapContainer', loc, true);
+                    APP_STATE.reports.forEach(r=>{ if(r.latitude&&r.longitude) addMarkerToMap(APP_STATE.maps.full, r); });
+                });
             }
-            function openImageLightbox(imageUrl) {
-                document.getElementById('lightboxImage').src = imageUrl;
-                document.getElementById('imageLightbox').style.display = 'flex';
+            function updateMapSidebarList(filterCategory='all', searchTerm='') {
+                const list=document.getElementById('mapSidebarList');
+                let filtered=APP_STATE.reports;
+                const verifiedOnly=document.getElementById('filterVerifiedOnly')?.checked;
+                if(verifiedOnly) filtered=filtered.filter(r=>r.verified);
+                if(filterCategory!=='all') filtered=filtered.filter(r=>r.category===filterCategory);
+                if(searchTerm) filtered=filtered.filter(r=>r.title.toLowerCase().includes(searchTerm.toLowerCase())||(r.location_name||'').toLowerCase().includes(searchTerm.toLowerCase()));
+                list.innerHTML=filtered.length===0?'<p style="text-align:center;color:var(--text-muted);">No reports.</p>':
+                    filtered.map(r=>{
+                        const cat=APP_STATE.categories.find(c=>c.name===r.category);
+                        return `<div class="card" style="padding:12px;cursor:pointer;" onclick="openFullscreenReport(${r.id})">
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <span style="font-size:1.5rem;color:${cat?.color}"><i class="fas ${cat?.icon}"></i></span>
+                                <div style="flex:1;"><div style="font-weight:600;">${r.title}</div><div style="font-size:0.75rem;color:var(--text-muted);">${r.location_name} · ${getTimeAgo(r.created_at)}</div></div>
+                                ${r.verified?'<span class="badge badge-success">✓</span>':'<span class="badge badge-warning">⏳</span>'}
+                            </div></div>`;
+                    }).join('');
             }
-            function closeImageLightbox() {
-                document.getElementById('imageLightbox').style.display = 'none';
+            function applyMapFilters(category='all') {
+                document.querySelectorAll('#mapFilters .map-filter-chip').forEach(chip=>{
+                    chip.classList.remove('active');
+                    if(chip.dataset.category===category||(category==='all'&&chip.textContent==='All')) chip.classList.add('active');
+                });
+                updateMapSidebarList(category, document.getElementById('mapSearch')?.value||'');
             }
 
-            // ── GLOBAL EXPOSURE ──────────────
-            window.navigateTo = navigateTo;
-            window.toggleAuthModal = toggleAuthModal;
-            window.toggleAuthMode = toggleAuthMode;
-            window.handleAuth = handleAuth;
-            window.handleAnonymousReport = handleAnonymousReport;
-            window.logout = logout;
-            window.goToStep = goToStep;
-            window.handleFileUpload = handleFileUpload;
-            window.handleVideoUpload = handleVideoUpload;
-            window.submitReportToSupabase = submitReportToSupabase;
-            window.openFullscreenReport = openFullscreenReport;
-            window.closeFullscreenReport = closeFullscreenReport;
-            window.openImageLightbox = openImageLightbox;
-            window.closeImageLightbox = closeImageLightbox;
-            window.verifyReportFromDetail = verifyReportFromDetail;
-            window.addCommentFromDetail = addCommentFromDetail;
-            window.applyMapFilters = applyMapFilters;
-            window.switchDashTab = switchDashTab;
+            // ----- REPORT FORM (with Photon) -----
+            function renderReportPage(container) {
+                const form=APP_STATE.reportForm;
+                container.innerHTML=`
+                <div class="report-form-container">
+                    <h2><i class="fas fa-pen-to-square"></i> Report an Incident</h2>
+                    <p style="color:var(--text-muted);margin-bottom:24px;">Your report helps keep the community safe.</p>
+                    <div class="step-indicator">
+                        <div class="step-dot active" id="stepDot1">1</div><div class="step-line" id="stepLine1"></div>
+                        <div class="step-dot" id="stepDot2">2</div><div class="step-line" id="stepLine2"></div>
+                        <div class="step-dot" id="stepDot3">3</div><div class="step-line" id="stepLine3"></div>
+                        <div class="step-dot" id="stepDot4">4</div>
+                    </div>
+                    <div class="form-step active" id="formStep1">
+                        <h3>Select Category</h3><p style="color:var(--text-muted);">What type of incident?</p>
+                        <div class="category-grid" id="reportCategoryGrid"></div>
+                        <div style="margin-top:20px;text-align:right;"><button class="btn btn-primary" id="step1Next" disabled onclick="goToStep(2)">Next →</button></div>
+                    </div>
+                    <div class="form-step" id="formStep2">
+                        <h3><i class="fas fa-map-pin"></i> Pinpoint Location</h3>
+                        <div style="display:flex;gap:8px;margin-bottom:8px;">
+                            <input type="text" class="input-field" placeholder="Search address..." id="locationSearchInput" style="flex:1;">
+                            <button class="btn btn-primary btn-sm" onclick="searchPhoton()">Search</button>
+                        </div>
+                        <div id="reportLocationMap" style="height:300px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px;"></div>
+                        <input type="text" class="input-field" placeholder="Location name" id="locationNameInput" value="${form.locationName||''}">
+                        <p style="font-size:0.75rem;color:var(--text-muted);">Coordinates: <span id="coordDisplay">${form.lat?form.lat.toFixed(4)+', '+form.lng.toFixed(4):'Detecting...'}</span></p>
+                        <div style="margin-top:16px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(1)">← Back</button><button class="btn btn-primary" onclick="goToStep(3)">Next →</button></div>
+                    </div>
+                    <div class="form-step" id="formStep3">
+                        <h3><i class="fas fa-camera"></i> Upload Evidence</h3>
+                        <div class="upload-zone" onclick="document.getElementById('mediaInput').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload image or video</p></div>
+                        <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" onchange="handleMediaUpload(event)">
+                        <div class="media-preview" id="mediaPreview"></div>
+                        <div style="margin-top:16px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(2)">← Back</button><button class="btn btn-primary" onclick="goToStep(4)">Next →</button></div>
+                    </div>
+                    <div class="form-step" id="formStep4">
+                        <h3><i class="fas fa-align-left"></i> Details</h3>
+                        <input type="text" class="input-field" placeholder="Title" id="reportTitle" value="${form.title}">
+                        <textarea class="input-field" placeholder="Describe what happened..." id="reportDescription">${form.description}</textarea>
+                        <select class="input-field" id="reportSeverity"><option value="low" ${form.severity==='low'?'selected':''}>Low</option><option value="medium" ${form.severity==='medium'?'selected':''}>Medium</option><option value="high" ${form.severity==='high'?'selected':''}>High</option><option value="critical" ${form.severity==='critical'?'selected':''}>Critical</option></select>
+                        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;"><input type="checkbox" id="anonymousToggle" ${form.anonymous?'checked':''} onchange="APP_STATE.reportForm.anonymous=this.checked"> Report anonymously</label>
+                        <div style="margin-top:20px;display:flex;justify-content:space-between;"><button class="btn btn-outline" onclick="goToStep(3)">← Back</button><button class="btn btn-success btn-lg" id="submitReportBtn" onclick="submitReportToSupabase()"><i class="fas fa-paper-plane"></i> Submit Report</button></div>
+                    </div>
+                    <div class="form-step" id="formSuccess" style="text-align:center;padding:40px;">
+                        <i class="fas fa-check-circle" style="font-size:4rem;color:var(--success);"></i>
+                        <h2>Report Submitted!</h2><p style="color:var(--text-muted);">Thank you for helping keep your community safe.</p>
+                        <button class="btn btn-primary btn-lg" onclick="navigateTo('map')">View on Map</button>
+                        <button class="btn btn-outline btn-lg" onclick="navigateTo('home')">Back to Home</button>
+                    </div>
+                </div>`;
+                const catGrid=document.getElementById('reportCategoryGrid');
+                APP_STATE.categories.forEach(cat=>{
+                    const btn=document.createElement('button'); btn.className='category-btn';
+                    btn.innerHTML=`<span class="cat-icon"><i class="fas ${cat.icon}"></i></span>${cat.name}`;
+                    btn.onclick=()=>{ document.querySelectorAll('#reportCategoryGrid .category-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); APP_STATE.reportForm.category=cat; document.getElementById('step1Next').disabled=false; };
+                    if(form.category?.id===cat.id){ btn.classList.add('selected'); document.getElementById('step1Next').disabled=false; }
+                    catGrid.appendChild(btn);
+                });
+                if(form.step>1) goToStep(form.step, true);
+                setTimeout(()=>{ if(form.step===2) initReportMap(); }, 300);
+            }
+            function goToStep(step, silent=false) {
+                APP_STATE.reportForm.step=step;
+                document.querySelectorAll('.form-step').forEach(s=>s.classList.remove('active'));
+                document.getElementById('formStep'+step)?.classList.add('active');
+                for(let i=1;i<=4;i++){
+                    const dot=document.getElementById('stepDot'+i), line=document.getElementById('stepLine'+i);
+                    if(dot){ dot.classList.remove('active','done'); if(i<step) dot.classList.add('done'); if(i===step) dot.classList.add('active'); }
+                    if(line){ line.classList.remove('done'); if(i<step) line.classList.add('done'); }
+                }
+                if(step===2 && !silent) initReportMap();
+                window.scrollTo({top:200,behavior:'smooth'});
+            }
+            let reportMarker = null;
+            function initReportMap() {
+                const mapEl=document.getElementById('reportLocationMap');
+                if(!mapEl) return;
+                if(APP_STATE.maps.report) APP_STATE.maps.report.remove();
+                const center=APP_STATE.userLocation||{lat:6.5244,lng:3.3792};
+                if(!APP_STATE.reportForm.lat){ APP_STATE.reportForm.lat=center.lat; APP_STATE.reportForm.lng=center.lng; }
+                const map=createMap('reportLocationMap', {lat:APP_STATE.reportForm.lat, lng:APP_STATE.reportForm.lng}, true);
+                APP_STATE.maps.report=map;
+                const marker = new maplibregl.Marker({draggable:true})
+                    .setLngLat([APP_STATE.reportForm.lng, APP_STATE.reportForm.lat])
+                    .addTo(map);
+                marker.on('dragend', ()=>{
+                    const lngLat=marker.getLngLat();
+                    APP_STATE.reportForm.lat=lngLat.lat; APP_STATE.reportForm.lng=lngLat.lng;
+                    document.getElementById('coordDisplay').textContent=lngLat.lat.toFixed(4)+', '+lngLat.lng.toFixed(4);
+                    reverseGeocodePhoton(lngLat.lat, lngLat.lng);
+                });
+                reportMarker = marker;
+                if(!APP_STATE.reportForm.locationName) reverseGeocodePhoton(APP_STATE.reportForm.lat, APP_STATE.reportForm.lng);
+            }
+            async function reverseGeocodePhoton(lat, lng) {
+                try {
+                    const res=await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`);
+                    const data=await res.json();
+                    if(data.features&&data.features.length>0){
+                        const name=data.features[0].properties.name||data.features[0].properties.street||'Unknown';
+                        APP_STATE.reportForm.locationName=name;
+                        document.getElementById('locationNameInput').value=name;
+                    }
+                } catch(e){}
+            }
+            async function searchPhoton() {
+                const query=document.getElementById('locationSearchInput').value.trim();
+                if(!query) return showToast('Enter a location.','error');
+                try {
+                    const res=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1`);
+                    const data=await res.json();
+                    if(!data.features||data.features.length===0){ showToast('Location not found.','error'); return; }
+                    const feature=data.features[0];
+                    const [lng,lat]=feature.geometry.coordinates;
+                    const name=feature.properties.name||feature.properties.street||'Unknown';
+                    APP_STATE.reportForm.lat=lat; APP_STATE.reportForm.lng=lng;
+                    APP_STATE.reportForm.locationName=name;
+                    document.getElementById('locationNameInput').value=name;
+                    document.getElementById('coordDisplay').textContent=lat.toFixed(4)+', '+lng.toFixed(4);
+                    if(APP_STATE.maps.report) {
+                        APP_STATE.maps.report.setCenter([lng,lat]);
+                        if(reportMarker) reportMarker.setLngLat([lng,lat]);
+                    }
+                } catch(e){ showToast('Search failed.','error'); }
+            }
+            function handleMediaUpload(event) {
+                const file=event.target.files[0]; if(!file) return;
+                APP_STATE.reportForm.mediaFile=file;
+                const preview=document.getElementById('mediaPreview');
+                if(file.type.startsWith('video')){
+                    preview.innerHTML=`<video src="${URL.createObjectURL(file)}" controls style="width:100%;max-height:200px;border-radius:8px;"></video><p style="font-size:0.75rem;color:var(--text-muted);"><i class="fas fa-video"></i> ${file.name}</p>`;
+                } else {
+                    const reader=new FileReader();
+                    reader.onload=e=>{ preview.innerHTML=`<img src="${e.target.result}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;"><p style="font-size:0.75rem;color:var(--text-muted);"><i class="fas fa-image"></i> ${file.name}</p>`; };
+                    reader.readAsDataURL(file);
+                }
+            }
 
-            // ── EVENT LISTENERS ──────────────
-            document.getElementById('hamburgerBtn').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
-            window.addEventListener('resize', updateMobileNavVisibility);
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeFullscreenReport(); closeImageLightbox(); } });
+            // ----- DASHBOARD -----
+            function renderDashboardPage(container) {
+                if(!APP_STATE.isAuthenticated) { container.innerHTML=`<div class="container" style="text-align:center;padding:60px;"><i class="fas fa-lock" style="font-size:4rem;color:var(--text-muted);"></i><h2>Please Sign In</h2><button class="btn btn-primary btn-lg" onclick="toggleAuthModal()">Sign In / Sign Up</button></div>`; return; }
+                const userReports=APP_STATE.reports.filter(r=>r.user_id===APP_STATE.currentUser?.id);
+                const vc=userReports.filter(r=>r.verified).length;
+                const profile=APP_STATE.currentProfile||{};
+                container.innerHTML=`
+                <div class="dashboard-layout">
+                    <div class="dashboard-sidebar">
+                        <a href="#" class="active" data-dash-tab="overview" onclick="switchDashTab('overview')"><i class="fas fa-th-large"></i> Overview</a>
+                        <a href="#" data-dash-tab="myreports" onclick="switchDashTab('myreports')"><i class="fas fa-file-alt"></i> My Reports</a>
+                        <a href="#" data-dash-tab="profile" onclick="switchDashTab('profile')"><i class="fas fa-user"></i> Profile</a>
+                        <a href="#" onclick="logout()" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                    <div class="dashboard-main" id="dashMainContent"></div>
+                </div>`;
+                switchDashTab('overview');
+            }
+            function switchDashTab(tab) {
+                document.querySelectorAll('[data-dash-tab]').forEach(a=>a.classList.remove('active'));
+                document.querySelector(`[data-dash-tab="${tab}"]`)?.classList.add('active');
+                const main=document.getElementById('dashMainContent');
+                const userReports=APP_STATE.reports.filter(r=>r.user_id===APP_STATE.currentUser?.id);
+                const vc=userReports.filter(r=>r.verified).length;
+                const profile=APP_STATE.currentProfile||{};
+                if(!main) return;
+                switch(tab){
+                    case 'overview':
+                        main.innerHTML=`<h2>Dashboard Overview</h2>
+                        <div class="dashboard-grid">
+                            <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(99,102,241,0.2);color:var(--accent);"><i class="fas fa-file-alt"></i></div><div class="stat-num">${userReports.length}</div><div class="stat-desc">Reports</div></div>
+                            <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(16,185,129,0.2);color:var(--success);"><i class="fas fa-check-circle"></i></div><div class="stat-num">${vc}</div><div class="stat-desc">Verified</div></div>
+                            <div class="dashboard-stat"><div class="stat-icon" style="background:rgba(245,158,11,0.2);color:var(--warning);"><i class="fas fa-star"></i></div><div class="stat-num">${profile.reputation||0}</div><div class="stat-desc">Reputation</div></div>
+                        </div>
+                        <h3>Recent Activity</h3>
+                        <div style="display:flex;flex-direction:column;gap:8px;">
+                            ${userReports.slice(0,5).map(r=>`<div class="card" style="padding:14px;cursor:pointer;" onclick="openFullscreenReport(${r.id})"><div style="display:flex;justify-content:space-between;"><div><strong>${r.title}</strong><div style="font-size:0.75rem;color:var(--text-muted);">${getTimeAgo(r.created_at)} · ${r.location_name}</div></div><span class="badge ${r.status==='verified'?'badge-success':'badge-warning'}">${r.status}</span></div></div>`).join('')}
+                        </div>`;
+                        break;
+                    case 'myreports':
+                        main.innerHTML=`<h2>My Reports</h2><div style="display:flex;flex-direction:column;gap:10px;">${userReports.map(r=>`<div class="card" style="padding:16px;cursor:pointer;" onclick="openFullscreenReport(${r.id})"><div style="display:flex;gap:12px;">${r.image_url?`<img src="${r.image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">`:''}<div style="flex:1;"><strong>${r.title}</strong><p style="font-size:0.8rem;color:var(--text-muted);">${r.location_name} · ${getTimeAgo(r.created_at)}</p><span class="badge ${r.status==='verified'?'badge-success':'badge-warning'}">${r.status}</span></div></div></div>`).join('')}</div>`;
+                        break;
+                    case 'profile':
+                        main.innerHTML=`<h2>Profile</h2><div class="card" style="max-width:500px;text-align:center;padding:24px;"><div class="avatar-sm" style="width:80px;height:80px;font-size:2rem;margin:0 auto;">${(profile.full_name||'U').charAt(0)}</div><h3>${profile.full_name||'User'}</h3><p style="color:var(--text-muted);">${APP_STATE.currentUser?.email}</p><p>Reputation: ${profile.reputation||0}</p><button class="btn btn-outline btn-sm" onclick="logout()">Logout</button></div>`;
+                        break;
+                }
+            }
 
-            // ── INIT ─────────────────────────
+            // ----- GLOBAL EXPOSURE -----
+            window.navigateTo=navigateTo; window.toggleAuthModal=toggleAuthModal; window.toggleAuthMode=toggleAuthMode;
+            window.handleAuth=handleAuth; window.handleAnonymousReport=handleAnonymousReport; window.logout=logout;
+            window.goToStep=goToStep; window.handleMediaUpload=handleMediaUpload; window.submitReportToSupabase=submitReportToSupabase;
+            window.openFullscreenReport=openFullscreenReport; window.closeFullscreenReport=closeFullscreenReport;
+            window.openImageLightbox=openImageLightbox; window.closeImageLightbox=closeImageLightbox;
+            window.verifyReport=verifyReport; window.addComment=addComment;
+            window.applyMapFilters=applyMapFilters; window.switchDashTab=switchDashTab; window.searchPhoton=searchPhoton;
+
+            // ----- EVENT LISTENERS -----
+            document.getElementById('hamburgerBtn').addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
+            window.addEventListener('resize', updateMobileNav);
+            document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeFullscreenReport(); closeImageLightbox(); } });
+
+            // ----- INIT -----
             async function init() {
-                updateMobileNavVisibility();
+                updateMobileNav();
+                getUserLocation(); // start early
                 await checkSession();
                 await fetchCategories();
                 await fetchReports();
                 navigateTo('home');
-                if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { APP_STATE.reportForm.lat = p.coords.latitude; APP_STATE.reportForm.lng = p.coords.longitude; }, ()=>{});
             }
             init();
         })();
