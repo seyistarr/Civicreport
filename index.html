@@ -177,11 +177,11 @@
     <div class="toast-container" id="toastContainer"></div>
     <main id="appContent"></main>
     <nav class="mobile-bottom-nav" id="mobileNav">
-        <a href="#" onclick="navigateTo('home')" class="active"><i class="fas fa-home"></i>Home</a>
-        <a href="#" onclick="navigateTo('map')"><i class="fas fa-map-marked-alt"></i>Map</a>
-        <a href="#" onclick="navigateTo('report')"><i class="fas fa-plus-circle"></i>Report</a>
-        <a href="#" onclick="navigateTo('dashboard')"><i class="fas fa-bell"></i>Alerts</a>
-        <a href="#" onclick="navigateTo('dashboard')"><i class="fas fa-user"></i>Profile</a>
+        <a href="#" onclick="navigateTo('home')" class="active" data-mob-nav="home"><i class="fas fa-home"></i>Home</a>
+        <a href="#" onclick="navigateTo('map')" data-mob-nav="map"><i class="fas fa-map-marked-alt"></i>Map</a>
+        <a href="#" onclick="navigateTo('report')" data-mob-nav="report"><i class="fas fa-plus-circle"></i>Report</a>
+        <a href="#" onclick="navigateTo('dashboard')" data-mob-nav="dashboard"><i class="fas fa-bell"></i>Alerts</a>
+        <a href="#" onclick="navigateTo('dashboard')" data-mob-nav="profile"><i class="fas fa-user"></i>Profile</a>
     </nav>
     <button class="fab-btn" id="fabBtn" onclick="navigateTo('report')"><i class="fas fa-plus"></i></button>
 
@@ -440,12 +440,19 @@
                 } catch(err) { showToast('Failed: '+err.message,'error'); }
             }
 
-            // ----- NAVIGATION -----
+            // ----- NAVIGATION (with mobile fix) -----
             function navigateTo(page) {
-                APP_STATE.currentPage=page;
-                document.querySelectorAll('[data-nav]').forEach(e=>e.classList.remove('active'));
+                APP_STATE.currentPage = page;
+                // Desktop nav
+                document.querySelectorAll('[data-nav]').forEach(el => el.classList.remove('active'));
                 document.querySelector(`[data-nav="${page}"]`)?.classList.add('active');
-                const app=document.getElementById('appContent');
+                // Mobile nav
+                document.querySelectorAll('[data-mob-nav]').forEach(el => el.classList.remove('active'));
+                const mobLink = document.querySelector(`[data-mob-nav="${page}"]`);
+                if (mobLink) mobLink.classList.add('active');
+                else document.querySelector('[data-mob-nav="dashboard"]')?.classList.add('active'); // fallback for 'profile'
+
+                const app = document.getElementById('appContent');
                 switch(page) {
                     case 'home': renderHomePage(app); break;
                     case 'map': renderMapPage(app); break;
@@ -468,7 +475,7 @@
                 return `${Math.floor(hrs/24)}d ago`;
             }
 
-            // ----- LOCATION -----
+            // ----- LOCATION (GPS + IP) -----
             async function getUserLocation() {
                 return new Promise(resolve => {
                     if(navigator.geolocation) {
@@ -493,7 +500,7 @@
             function createMap(containerId, center, interactive=true) {
                 const map = new maplibregl.Map({
                     container: containerId,
-                    style: 'https://tiles.openfreemap.org/styles/liberty', // OpenFreeMap style
+                    style: 'https://tiles.openfreemap.org/styles/liberty',
                     center: [center.lng, center.lat],
                     zoom: 13,
                     interactive: interactive
@@ -504,7 +511,6 @@
             function addMarkerToMap(map, report) {
                 const catData = APP_STATE.categories.find(c=>c.name===report.category);
                 const el = document.createElement('div');
-                el.className = 'marker';
                 el.style.backgroundColor = catData?.color||'#EF4444';
                 el.style.width = '12px'; el.style.height = '12px'; el.style.borderRadius = '50%';
                 el.style.border = '2px solid white';
@@ -666,7 +672,7 @@
                 updateMapSidebarList(category, document.getElementById('mapSearch')?.value||'');
             }
 
-            // ----- REPORT FORM (with Photon search) -----
+            // ----- REPORT FORM (with Photon) -----
             function renderReportPage(container) {
                 const form=APP_STATE.reportForm;
                 container.innerHTML=`
@@ -805,7 +811,7 @@
                 }
             }
 
-            // ----- DASHBOARD (unchanged) -----
+            // ----- DASHBOARD -----
             function renderDashboardPage(container) {
                 if(!APP_STATE.isAuthenticated) { container.innerHTML=`<div class="container" style="text-align:center;padding:60px;"><i class="fas fa-lock" style="font-size:4rem;color:var(--text-muted);"></i><h2>Please Sign In</h2><button class="btn btn-primary btn-lg" onclick="toggleAuthModal()">Sign In / Sign Up</button></div>`; return; }
                 const userReports=APP_STATE.reports.filter(r=>r.user_id===APP_STATE.currentUser?.id);
@@ -870,7 +876,7 @@
             // ----- INIT -----
             async function init() {
                 updateMobileNav();
-                getUserLocation(); // background
+                getUserLocation(); // start early
                 await checkSession();
                 await fetchCategories();
                 await fetchReports();
